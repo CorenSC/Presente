@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import logoBranco from '../../../public/images/Corensc_branco.png';
 
 const Navbar: React.FC = () => {
     const [menuAberto, setMenuAberto] = useState(false);
@@ -19,8 +20,7 @@ const Navbar: React.FC = () => {
             <div className="max-w-7xl mx-auto flex items-center justify-between">
                 {/* Logo */}
                 <div className="flex items-center space-x-2">
-                    <div className="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">SC</div>
-                    <span className="text-xl font-bold text-white">Coren-SC</span>
+                    <img src={logoBranco} alt="Imagem do Coren-SC" width='80'/>
                 </div>
 
                 {/* Menu desktop */}
