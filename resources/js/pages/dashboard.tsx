@@ -1,7 +1,8 @@
+import { Input } from '@/components/ui/input';
+import DefaultLayout from '@/layouts/app/default-layout';
+import { Head } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import DefaultLayout from '@/layouts/app/default-layout';
-import { Input } from '@/components/ui/input';
 
 const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -91,121 +92,124 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <DefaultLayout>
-            <header className="mb-6">
-                <h1 className="text-3xl font-bold text-[#214064] dark:text-white">Dashboard de Eventos</h1>
-                <p className="text-[#214064] dark:text-white">Resumo geral dos eventos da empresa</p>
-            </header>
+        <>
+            <Head title="Dashboard" />
+            <DefaultLayout>
+                <header className="mb-6">
+                    <h1 className="text-primary text-3xl font-bold dark:text-white">Dashboard de Eventos</h1>
+                    <p className="text-primary dark:text-white">Resumo geral dos eventos da empresa</p>
+                </header>
 
-            <div className="mb-6">
-                <select
-                    value={mesSelecionado}
-                    onChange={(e) => setMesSelecionado(e.target.value)}
-                    className="mb-4 rounded border border-[#214064] text-[#214064] p-2 text-sm shadow dark:bg-gray-800 dark:text-white dark:border-none"
-                >
-                    <option value="todos">Todos os meses</option>
-                    <option value="2025-03">Março 2025</option>
-                    <option value="2025-04">Abril 2025</option>
-                    <option value="2025-05">Maio 2025</option>
-                </select>
+                <div className="mb-6">
+                    <select
+                        value={mesSelecionado}
+                        onChange={(e) => setMesSelecionado(e.target.value)}
+                        className="border-primary text-primary mb-4 rounded border p-2 text-sm shadow dark:border-none dark:bg-gray-800 dark:text-white"
+                    >
+                        <option value="todos">Todos os meses</option>
+                        <option value="2025-03">Março 2025</option>
+                        <option value="2025-04">Abril 2025</option>
+                        <option value="2025-05">Maio 2025</option>
+                    </select>
 
-                <div className="flex space-x-4">
-                    <div>
-                        <Input
-                            placeholder="dd/mm/aaaa"
-                            id="dataInicio"
-                            label="Data início:"
-                            value={dataInicio}
-                            onChange={(e) => setDataInicio(e.target.value)}
-                            className="border border-[#214064] text-sm shadow-md text-[#214064] dark:bg-gray-800 dark:text-white dark:border-none"
-                            type='date'
-                        />
-                    </div>
-                    <div>
-                        <Input
-                            placeholder="dd/mm/aaaa"
-                            id="dataFim"
-                            label="Data fim:"
-                            value={dataFim}
-                            onChange={(e) => setDataFim(e.target.value)}
-                            className="border border-[#214064] text-sm shadow-md text-[#214064] dark:bg-gray-800 dark:text-white dark:border-none"
-                            type='date'
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-                <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                    <h2 className="text-lg font-semibold text-gray-700">Total de Eventos</h2>
-                    <p className="text-2xl font-bold text-indigo-600">{eventosFiltrados.length}</p>
-                </div>
-
-                <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                    <h2 className="text-lg font-semibold text-gray-700">Eventos Realizados</h2>
-                    <p className="text-2xl font-bold text-indigo-600">{eventosPassados.length}</p>
-                </div>
-
-                <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                    <h2 className="text-lg font-semibold text-gray-700">Eventos Pendentes</h2>
-                    <p className="text-2xl font-bold text-indigo-600">{eventosFuturos.length}</p>
-                </div>
-            </div>
-
-            <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
-                    <h2 className="mb-4 text-xl font-semibold text-gray-800">Próximos Eventos</h2>
-                    <table className="w-full table-auto">
-                        <thead>
-                            <tr className="text-left text-sm text-gray-600">
-                                <th className="pb-2">Nome</th>
-                                <th className="pb-2">Data</th>
-                                <th className="pb-2">Local</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {eventosFuturos.map((evento) => (
-                                <tr key={evento.id} className="border-t text-sm text-gray-700">
-                                    <td className="py-2">{evento.nome}</td>
-                                    <td className="py-2">{evento.data}</td>
-                                    <td className="py-2">{evento.local}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
-                    <h2 className="mb-4 text-xl font-semibold text-gray-800">Resumo de Eventos</h2>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
-                                {pieData.map((_, index) => (
-                                    <Cell key={`cell-${index}`} fill={cores[index % cores.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                content={({ active, payload }) => {
-                                    if (active && payload && payload.length) {
-                                        const { name, value } = payload[0].payload;
-                                        return (
-                                            <div className="rounded-lg border bg-white px-4 py-2 text-sm text-gray-800 shadow">
-                                                <p className="font-semibold">{name}</p>
-                                                <p>
-                                                    {value} evento{value > 1 ? 's' : ''}
-                                                </p>
-                                            </div>
-                                        );
-                                    }
-                                    return null;
-                                }}
+                    <div className="flex space-x-4">
+                        <div>
+                            <Input
+                                placeholder="dd/mm/aaaa"
+                                id="dataInicio"
+                                label="Data início:"
+                                value={dataInicio}
+                                onChange={(e) => setDataInicio(e.target.value)}
+                                className="border-primary text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
+                                type="date"
                             />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
+                        </div>
+                        <div>
+                            <Input
+                                placeholder="dd/mm/aaaa"
+                                id="dataFim"
+                                label="Data fim:"
+                                value={dataFim}
+                                onChange={(e) => setDataFim(e.target.value)}
+                                className="border-primary text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
+                                type="date"
+                            />
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </DefaultLayout>
+
+                <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
+                        <h2 className="text-lg font-semibold text-gray-700">Total de Eventos</h2>
+                        <p className="text-2xl font-bold text-indigo-600">{eventosFiltrados.length}</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
+                        <h2 className="text-lg font-semibold text-gray-700">Eventos Realizados</h2>
+                        <p className="text-2xl font-bold text-indigo-600">{eventosPassados.length}</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
+                        <h2 className="text-lg font-semibold text-gray-700">Eventos Pendentes</h2>
+                        <p className="text-2xl font-bold text-indigo-600">{eventosFuturos.length}</p>
+                    </div>
+                </div>
+
+                <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
+                        <h2 className="mb-4 text-xl font-semibold text-gray-800">Próximos Eventos</h2>
+                        <table className="w-full table-auto">
+                            <thead>
+                                <tr className="text-left text-sm text-gray-600">
+                                    <th className="pb-2">Nome</th>
+                                    <th className="pb-2">Data</th>
+                                    <th className="pb-2">Local</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {eventosFuturos.map((evento) => (
+                                    <tr key={evento.id} className="border-t text-sm text-gray-700">
+                                        <td className="py-2">{evento.nome}</td>
+                                        <td className="py-2">{evento.data}</td>
+                                        <td className="py-2">{evento.local}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
+                        <h2 className="mb-4 text-xl font-semibold text-gray-800">Resumo de Eventos</h2>
+                        <ResponsiveContainer width="100%" height={250}>
+                            <PieChart>
+                                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
+                                    {pieData.map((_, index) => (
+                                        <Cell key={`cell-${index}`} fill={cores[index % cores.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            const { name, value } = payload[0].payload;
+                                            return (
+                                                <div className="rounded-lg border bg-white px-4 py-2 text-sm text-gray-800 shadow">
+                                                    <p className="font-semibold">{name}</p>
+                                                    <p>
+                                                        {value} evento{value > 1 ? 's' : ''}
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </DefaultLayout>
+        </>
     );
 };
 

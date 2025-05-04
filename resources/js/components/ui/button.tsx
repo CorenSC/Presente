@@ -50,7 +50,7 @@ function Button({
     <Comp
       data-slot="button"
       className={cn(
-          "w-full bg-primary hover:bg-primary-foreground text-white font-semibold py-2 px-4 rounded shadow-2xl active:scale-95 transition-all",
+          "w-full bg-primary hover:bg-primary-foreground text-white font-semibold py-2 px-4 cursor-pointer rounded shadow-2xl active:scale-95 transition-all",
           className
       )}
       {...props}

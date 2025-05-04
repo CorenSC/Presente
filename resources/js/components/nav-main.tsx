@@ -1,34 +1,53 @@
-import React, { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Link } from '@inertiajs/react';
+import { Menu, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { RxExit } from 'react-icons/rx';
 import logoBranco from '../../../public/images/Corensc_branco.png';
 
 const Navbar: React.FC = () => {
     const [menuAberto, setMenuAberto] = useState(false);
-    const [rotaAtual, setRotaAtual] = useState("");
+    const [rotaAtual, setRotaAtual] = useState('');
 
     useEffect(() => {
         setRotaAtual(window.location.pathname);
     }, []);
 
-    const linkClass = (path: string) =>
-        rotaAtual === path
-            ? "text-indigo-400 font-semibold"
-            : "hover:text-indigo-600 transition";
+    const linkClass = (path: string) => (rotaAtual === path ? 'text-gray-600 font-black' : 'hover:text-gray-400 transition');
 
+    // @ts-ignore
+    // @ts-ignore
     return (
-        <nav className="bg-[#214064] dark:bg-[#1B2C40] text-white shadow-md px-6 py-4 sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <nav className="bg-primary sticky top-0 z-50 px-6 py-4 text-white shadow-md dark:bg-[#1B2C40]">
+            <div className="mx-auto flex max-w-7xl items-center justify-between">
                 {/* Logo */}
                 <div className="flex items-center space-x-2">
-                    <img src={logoBranco} alt="Imagem do Coren-SC" width='80'/>
+                    <img src={logoBranco} alt="Imagem do Coren-SC" width="80" />
                 </div>
 
                 {/* Menu desktop */}
-                <ul className="hidden md:flex items-center space-x-6 text-sm text-white">
-                    <li><a href="/dashboard" className={linkClass("/dashboard")}>Dashboard</a></li>
-                    <li><a href="/eventos" className={linkClass("/eventos")}>Eventos</a></li>
-                    <li><a href="/relatorios" className={linkClass("/relatorios")}>Relatórios</a></li>
-                    <li><a href="/logout" className={linkClass("/logout")}>Sair</a></li>
+                <ul className="hidden items-center space-x-6 text-sm text-white md:flex">
+                    <li>
+                        <Link href={route('dashboard')} className={linkClass('/dashboard')}>
+                            {' '}
+                            Dashboard
+                        </Link>
+                    </li>
+                    <li>
+                        <Link href={route('eventos')} className={linkClass('/eventos')}>
+                            {' '}
+                            Eventos
+                        </Link>
+                    </li>
+                    <li>
+                        <Link href="#" className={linkClass('/relatorios')}>
+                            Relatórios
+                        </Link>
+                    </li>
+                    <li>
+                        <Link href={route('logout')} className={`${linkClass('/logout')} flex items-center gap-2`}>
+                            Sair <RxExit />
+                        </Link>
+                    </li>
                 </ul>
 
                 {/* Botão mobile */}
@@ -41,11 +60,19 @@ const Navbar: React.FC = () => {
 
             {/* Menu mobile */}
             {menuAberto && (
-                <div className="md:hidden mt-4 space-y-2 text-sm text-white animate-fade-in-down">
-                    <a href="/dashboard" className={linkClass("/dashboard")}>Dashboard</a>
-                    <a href="/eventos" className={linkClass("/eventos")}>Eventos</a>
-                    <a href="/relatorios" className={linkClass("/relatorios")}>Relatórios</a>
-                    <a href="/logout" className={linkClass("/logout")}>Sair</a>
+                <div className="animate-fade-in-down mt-4 space-y-2 text-sm text-white md:hidden">
+                    <a href="/dashboard" className={linkClass('/dashboard')}>
+                        Dashboard
+                    </a>
+                    <a href="/eventos" className={linkClass('/eventos')}>
+                        Eventos
+                    </a>
+                    <a href="/relatorios" className={linkClass('/relatorios')}>
+                        Relatórios
+                    </a>
+                    <a href="/logout" className={linkClass('/logout')}>
+                        Sair
+                    </a>
                 </div>
             )}
         </nav>

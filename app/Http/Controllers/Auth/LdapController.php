@@ -58,7 +58,9 @@ class LdapController extends Controller
         }
 
         Auth::login($user);
-        return redirect()->intended('dashboard');
+        return redirect()->route('dashboard')->withHeaders([
+            'X-Inertia' => 'true',
+        ]);
     }
 
     public function logout(Request $request)

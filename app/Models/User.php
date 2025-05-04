@@ -29,7 +29,12 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $hidden = [];
+    protected $hidden = [
+        'username',
+        'departamento',
+        'id',
+        'password',
+    ];
 
     /**
      * Get the attributes that should be cast.
