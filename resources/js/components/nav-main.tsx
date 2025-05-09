@@ -21,20 +21,20 @@ const Navbar: React.FC = () => {
             <div className="mx-auto flex max-w-7xl items-center justify-between">
                 {/* Logo */}
                 <div className="flex items-center space-x-2">
-                    <img src={logoBranco} alt="Imagem do Coren-SC" width="80" />
+                    <Link href={route('dashboard')}>
+                        <img src={logoBranco} alt="Imagem do Coren-SC" width="80" />
+                    </Link>
                 </div>
 
                 {/* Menu desktop */}
                 <ul className="hidden items-center space-x-6 text-sm text-white md:flex">
                     <li>
                         <Link href={route('dashboard')} className={linkClass('/dashboard')}>
-                            {' '}
                             Dashboard
                         </Link>
                     </li>
                     <li>
                         <Link href={route('eventos')} className={linkClass('/eventos')}>
-                            {' '}
                             Eventos
                         </Link>
                     </li>

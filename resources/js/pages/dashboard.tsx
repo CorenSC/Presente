@@ -3,29 +3,38 @@ import DefaultLayout from '@/layouts/app/default-layout';
 import { Head } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatarDataBrasileira } from '@/lib/utils';
 
-const Dashboard: React.FC = () => {
+interface Evento {
+    id: number;
+    nome: string;
+    local_do_evento: string;
+    data_inicio: string;
+    data_fim: string;
+    hora_inicio: string;
+    hora_fim: string;
+}
+
+interface EventoProps {
+    eventos: Evento[];
+}
+
+const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
     const [loading, setLoading] = useState(true);
     const [mesSelecionado, setMesSelecionado] = useState<string>('todos');
     const [dataInicio, setDataInicio] = useState<string>('');
     const [dataFim, setDataFim] = useState<string>('');
 
-    const eventos = [
-        { id: 1, nome: 'Workshop de Inovação', data: '2025-04-10', local: 'Auditório 1' },
-        { id: 2, nome: 'Treinamento de Vendas', data: '2025-05-20', local: 'Sala 3' },
-        { id: 3, nome: 'Palestra Motivacional', data: '2025-06-01', local: 'Auditório Principal' },
-        { id: 4, nome: 'Feira de Negócios', data: '2025-03-01', local: 'Centro de Eventos' },
-    ];
-
     const eventosFiltrados = eventos.filter((evento) => {
         if (mesSelecionado !== 'todos') {
-            const dataEvento = new Date(evento.data);
+            const dataEvento = new Date(evento.data_inicio);
             const mesAno = `${dataEvento.getFullYear()}-${String(dataEvento.getMonth() + 1).padStart(2, '0')}`;
             if (mesAno !== mesSelecionado) return false;
         }
 
         if (dataInicio || dataFim) {
-            const dataEvento = new Date(evento.data);
+            const dataEvento = new Date(evento.data_inicio);
             if (dataInicio && dataEvento < new Date(dataInicio)) return false;
             if (dataFim && dataEvento > new Date(dataFim)) return false;
         }
@@ -34,16 +43,21 @@ const Dashboard: React.FC = () => {
     });
 
     const hoje = new Date();
-    const eventosPassados = eventosFiltrados.filter((e) => new Date(e.data) < hoje);
-    const eventosFuturos = eventosFiltrados.filter((e) => new Date(e.data) >= hoje);
+    const eventosPassados = eventosFiltrados.filter((e) => new Date(e.data_fim) < hoje);
+    const eventosFuturos = eventosFiltrados.filter((e) => new Date(e.data_inicio) >= hoje);
 
     const pieData = [
         { name: 'Eventos Realizados', value: eventosPassados.length },
         { name: 'Eventos Futuros', value: eventosFuturos.length },
     ];
 
-    const cores = ['#6366f1', '#10b981']; // Indigo e verde
+    const mesesDoAno = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    const cores = ['#104E64FF', '#009689FF'];
 
+    // Simulação de carregamento
     useEffect(() => {
         const timer = setTimeout(() => setLoading(false), 1500);
         return () => clearTimeout(timer);
@@ -54,7 +68,6 @@ const Dashboard: React.FC = () => {
             <DefaultLayout>
                 <div className="animate-pulse space-y-6">
                     <div className="h-10 w-1/4 rounded-md bg-gray-300" />
-
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         {[...Array(3)].map((_, i) => (
                             <div key={i} className="rounded-2xl bg-white p-4 shadow">
@@ -63,7 +76,6 @@ const Dashboard: React.FC = () => {
                             </div>
                         ))}
                     </div>
-
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div className="space-y-4 rounded-2xl bg-white p-6 shadow">
                             <div className="h-6 w-1/3 rounded bg-gray-300" />
@@ -75,7 +87,6 @@ const Dashboard: React.FC = () => {
                                 </div>
                             ))}
                         </div>
-
                         <div className="space-y-4 rounded-2xl bg-white p-6 shadow">
                             <div className="h-6 w-1/3 rounded bg-gray-300" />
                             <div className="h-40 w-full rounded-xl bg-gray-200" />
@@ -101,16 +112,22 @@ const Dashboard: React.FC = () => {
                 </header>
 
                 <div className="mb-6">
-                    <select
+                    <Select
                         value={mesSelecionado}
-                        onChange={(e) => setMesSelecionado(e.target.value)}
-                        className="border-primary text-primary mb-4 rounded border p-2 text-sm shadow dark:border-none dark:bg-gray-800 dark:text-white"
+                        onValueChange={(value) => setMesSelecionado(value)}
                     >
-                        <option value="todos">Todos os meses</option>
-                        <option value="2025-03">Março 2025</option>
-                        <option value="2025-04">Abril 2025</option>
-                        <option value="2025-05">Maio 2025</option>
-                    </select>
+                        <SelectTrigger className="bg-white text-primary w-1/6 mb-4 rounded border p-2 text-sm shadow dark:bg-gray-800 dark:text-white">
+                            <SelectValue placeholder="--Selecione o mês--" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="todos">Todos os meses</SelectItem>
+                            {mesesDoAno.map((mes) => (
+                                <SelectItem key={mes} value={mes}>
+                                    {mes}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
 
                     <div className="flex space-x-4">
                         <div>
@@ -120,7 +137,7 @@ const Dashboard: React.FC = () => {
                                 label="Data início:"
                                 value={dataInicio}
                                 onChange={(e) => setDataInicio(e.target.value)}
-                                className="border-primary text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
+                                className="text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
                                 type="date"
                             />
                         </div>
@@ -131,7 +148,7 @@ const Dashboard: React.FC = () => {
                                 label="Data fim:"
                                 value={dataFim}
                                 onChange={(e) => setDataFim(e.target.value)}
-                                className="border-primary text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
+                                className="text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
                                 type="date"
                             />
                         </div>
@@ -140,18 +157,18 @@ const Dashboard: React.FC = () => {
 
                 <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-semibold text-gray-700">Total de Eventos</h2>
-                        <p className="text-2xl font-bold text-indigo-600">{eventosFiltrados.length}</p>
+                        <h2 className="text-lg font-black text-primary">Total de Eventos</h2>
+                        <p className="text-2xl font-bold text-primary">{eventosFiltrados.length}</p>
                     </div>
 
                     <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-semibold text-gray-700">Eventos Realizados</h2>
-                        <p className="text-2xl font-bold text-indigo-600">{eventosPassados.length}</p>
+                        <h2 className="text-lg font-black text-primary">Eventos Realizados</h2>
+                        <p className="text-2xl font-bold text-primary">{eventosPassados.length}</p>
                     </div>
 
                     <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-semibold text-gray-700">Eventos Pendentes</h2>
-                        <p className="text-2xl font-bold text-indigo-600">{eventosFuturos.length}</p>
+                        <h2 className="text-lg font-black text-primary">Eventos Pendentes</h2>
+                        <p className="text-2xl font-bold text-primary">{eventosFuturos.length}</p>
                     </div>
                 </div>
 
@@ -160,26 +177,26 @@ const Dashboard: React.FC = () => {
                         <h2 className="mb-4 text-xl font-semibold text-gray-800">Próximos Eventos</h2>
                         <table className="w-full table-auto">
                             <thead>
-                                <tr className="text-left text-sm text-gray-600">
-                                    <th className="pb-2">Nome</th>
-                                    <th className="pb-2">Data</th>
-                                    <th className="pb-2">Local</th>
-                                </tr>
+                            <tr className="text-left text-sm text-gray-600">
+                                <th className="pb-2">Nome</th>
+                                <th className="pb-2">Data</th>
+                                <th className="pb-2">Local</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                {eventosFuturos.map((evento) => (
-                                    <tr key={evento.id} className="border-t text-sm text-gray-700">
-                                        <td className="py-2">{evento.nome}</td>
-                                        <td className="py-2">{evento.data}</td>
-                                        <td className="py-2">{evento.local}</td>
-                                    </tr>
-                                ))}
+                            {eventosFuturos.map((evento) => (
+                                <tr key={evento.id} className="border-t font-black text-primary">
+                                    <td className="py-2">{evento.nome}</td>
+                                    <td className="py-2">{formatarDataBrasileira(evento.data_inicio)}</td>
+                                    <td className="py-2">{evento.local_do_evento}</td>
+                                </tr>
+                            ))}
                             </tbody>
                         </table>
                     </div>
 
                     <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
-                        <h2 className="mb-4 text-xl font-semibold text-gray-800">Resumo de Eventos</h2>
+                        <h2 className="mb-4 text-xl font-black text-primary">Resumo de Eventos</h2>
                         <ResponsiveContainer width="100%" height={250}>
                             <PieChart>
                                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>

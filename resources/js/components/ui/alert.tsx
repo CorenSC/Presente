@@ -1,66 +1,57 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from '@/lib/utils';
+import { CircleCheck, CircleX, Info, TriangleAlert } from 'lucide-react';
+import * as React from 'react';
 
-import { cn } from "@/lib/utils"
+type AlertProps = React.ComponentProps<'div'> & {
+    variant?: 'success' | 'error' | 'warning' | 'info';
+};
 
-const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
-  {
-    variants: {
-      variant: {
-        default: "bg-background text-foreground",
-        destructive:
-          "text-destructive-foreground [&>svg]:text-current *:data-[slot=alert-description]:text-destructive-foreground/80",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
-
-function Alert({
-  className,
-  variant,
-  ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
-  return (
-    <div
-      data-slot="alert"
-      role="alert"
-      className={cn(alertVariants({ variant }), className)}
-      {...props}
-    />
-  )
+function Alert({ variant = 'error', className, ...props }: AlertProps) {
+    const variants = {
+        success: 'bg-green-100 border border-green-300 text-green-800 dark:bg-green-800/10 dark:border-green-900 dark:text-green-500',
+        error: 'bg-red-100 border border-red-300 text-red-800 dark:bg-red-800/10 dark:border-red-900 dark:text-red-500',
+        warning: 'bg-yellow-100 border border-yellow-300 text-yellow-800 dark:bg-yellow-800/10 dark:border-yellow-900 dark:text-yellow-500',
+        info: 'bg-blue-100 border border-blue-300 text-blue-800 dark:bg-blue-800/10 dark:border-blue-900 dark:text-blue-500',
+    };
+    return (
+        <div
+            data-slot="alert"
+            role="alert"
+            className={cn(
+                'relative rounded-lg w-full lg:w-1/2 p-4 text-sm',
+                variants[variant],
+                className
+            )}
+            {...props}
+        />
+    );
 }
 
-function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="alert-title"
-      className={cn(
-        "col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight",
-        className
-      )}
-      {...props}
-    />
-  )
+function AlertTitle({ className, variant='error', children, ...props }: AlertProps) {
+    const icons = {
+      success:  <CircleCheck />,
+        error:  <CircleX />,
+        warning: <TriangleAlert />,
+        info: <Info />
+    };
+
+    // @ts-ignore
+    return (
+        <div data-slot="alert-title" className={cn('col-start-2 mb-4 flex items-center gap-2 font-bold tracking-tight', className)} {...props}>
+            {icons[variant]}
+            {children}
+        </div>
+    );
 }
 
-function AlertDescription({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="alert-description"
-      className={cn(
-        "text-muted-foreground col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed",
-        className
-      )}
-      {...props}
-    />
-  )
+function AlertDescription({ className, ...props }: React.ComponentProps<'div'>) {
+    return (
+        <div
+            data-slot="alert-description"
+            className={cn('col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed', className)}
+            {...props}
+        />
+    );
 }
 
-export { Alert, AlertTitle, AlertDescription }
+export { Alert, AlertDescription, AlertTitle };

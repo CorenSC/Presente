@@ -15,11 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('nome');
             $table->string('local_do_evento');
+            $table->text('descricao');
             $table->date('data_inicio');
             $table->date('data_fim');
             $table->time('hora_inicio');
             $table->time('hora_fim');
             $table->boolean('ativo')->default(true);
+            $table->boolean('link_liberado')->default(false);
+            $table->boolean('qr_code_gerado')->default(false);
             $table->timestamps();
         });
     }

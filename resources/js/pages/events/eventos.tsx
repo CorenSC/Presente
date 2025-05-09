@@ -13,7 +13,7 @@ export default function Eventos() {
                     </CardHeader>
                     <CardContent className='flex-1 flex flex-col items-center gap-6 justify-center lg:flex-row'>
                         <Link
-                            href="#"
+                            href={route('listarEventos')}
                             className='p-2 rounded-md shadow-md w-2/3 lg:w-1/3 h-8 bg-primary text-white text-sm flex items-center justify-center hover:bg-primary-foreground hover:shadow-lg transition-all'>
                             Listar eventos
                         </Link>

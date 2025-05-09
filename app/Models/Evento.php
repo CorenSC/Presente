@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @method static \Illuminate\Database\Eloquent\Builder create(array $attributes)
+ * @method static \Illuminate\Database\Eloquent\Builder  findOrFail(int $id)
  */
 class Evento extends Model
 {
@@ -15,11 +16,14 @@ class Evento extends Model
     protected $fillable = [
         'nome',
         'local_do_evento',
+        'descricao',
         'data_inicio',
         'data_fim',
         'hora_inicio',
         'hora_fim',
         'ativo',
+        'link_liberado',
+        'qr_code_gerado'
     ];
 
     /**
@@ -31,6 +35,20 @@ class Evento extends Model
     {
         return [
             'ativo' => 'boolean',
+            'link_liberado' => 'boolean',
+            'qr_code_gerado' => 'boolean',
         ];
+    }
+
+    public function participantes()
+    {
+        return $this->belongsToMany(Participante::class)
+                    ->withPivot(['status'])
+                    ->withTimestamps();
+    }
+
+    public function atividades()
+    {
+        return $this->hasMany(Atividade::class);
     }
 }
