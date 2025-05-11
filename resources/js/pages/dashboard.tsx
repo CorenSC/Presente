@@ -28,9 +28,9 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
 
     const eventosFiltrados = eventos.filter((evento) => {
         if (mesSelecionado !== 'todos') {
-            const dataEvento = new Date(evento.data_inicio);
-            const mesAno = `${dataEvento.getFullYear()}-${String(dataEvento.getMonth() + 1).padStart(2, '0')}`;
-            if (mesAno !== mesSelecionado) return false;
+            const mesAnoEvento = evento.data_inicio.slice(0, 7);
+            console.log(mesAnoEvento, mesSelecionado);
+            if (mesAnoEvento !== mesSelecionado) return false;
         }
 
         if (dataInicio || dataFim) {
@@ -55,9 +55,9 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
+
     const cores = ['#104E64FF', '#009689FF'];
 
-    // Simulação de carregamento
     useEffect(() => {
         const timer = setTimeout(() => setLoading(false), 1500);
         return () => clearTimeout(timer);
@@ -108,7 +108,6 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
             <DefaultLayout>
                 <header className="mb-6">
                     <h1 className="text-primary text-3xl font-bold dark:text-white">Dashboard de Eventos</h1>
-                    <p className="text-primary dark:text-white">Resumo geral dos eventos da empresa</p>
                 </header>
 
                 <div className="mb-6">
@@ -116,13 +115,13 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
                         value={mesSelecionado}
                         onValueChange={(value) => setMesSelecionado(value)}
                     >
-                        <SelectTrigger className="bg-white text-primary w-1/6 mb-4 rounded border p-2 text-sm shadow dark:bg-gray-800 dark:text-white">
+                        <SelectTrigger className="bg-white text-primary w-1/6 mb-4 border-none rounded p-2 text-sm shadow dark:bg-gray-800 dark:text-white">
                             <SelectValue placeholder="--Selecione o mês--" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="todos">Todos os meses</SelectItem>
-                            {mesesDoAno.map((mes) => (
-                                <SelectItem key={mes} value={mes}>
+                            {mesesDoAno.map((mes, index) => (
+                                <SelectItem key={index} value={`2025-${String(index + 1).padStart(2, '0')}`}>
                                     {mes}
                                 </SelectItem>
                             ))}
@@ -157,27 +156,27 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
 
                 <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-black text-primary">Total de Eventos</h2>
-                        <p className="text-2xl font-bold text-primary">{eventosFiltrados.length}</p>
+                        <h2 className="text-lg font-black text-primary dark:text-white">Total de Eventos</h2>
+                        <p className="text-2xl font-bold text-primary dark:text-white">{eventosFiltrados.length}</p>
                     </div>
 
                     <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-black text-primary">Eventos Realizados</h2>
-                        <p className="text-2xl font-bold text-primary">{eventosPassados.length}</p>
+                        <h2 className="text-lg font-black text-primary dark:text-white">Eventos Realizados</h2>
+                        <p className="text-2xl font-bold text-primary dark:text-white">{eventosPassados.length}</p>
                     </div>
 
                     <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-black text-primary">Eventos Pendentes</h2>
-                        <p className="text-2xl font-bold text-primary">{eventosFuturos.length}</p>
+                        <h2 className="text-lg font-black text-primary dark:text-white">Eventos Pendentes</h2>
+                        <p className="text-2xl font-bold text-primary dark:text-white">{eventosFuturos.length}</p>
                     </div>
                 </div>
 
                 <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
-                        <h2 className="mb-4 text-xl font-semibold text-gray-800">Próximos Eventos</h2>
+                        <h2 className="mb-4 text-xl font-semibold text-primary dark:text-white">Próximos Eventos</h2>
                         <table className="w-full table-auto">
                             <thead>
-                            <tr className="text-left text-sm text-gray-600">
+                            <tr className="text-left text-sm text-gray-400">
                                 <th className="pb-2">Nome</th>
                                 <th className="pb-2">Data</th>
                                 <th className="pb-2">Local</th>
@@ -185,7 +184,7 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
                             </thead>
                             <tbody>
                             {eventosFuturos.map((evento) => (
-                                <tr key={evento.id} className="border-t font-black text-primary">
+                                <tr key={evento.id} className="border-t font-black text-primary dark:text-white">
                                     <td className="py-2">{evento.nome}</td>
                                     <td className="py-2">{formatarDataBrasileira(evento.data_inicio)}</td>
                                     <td className="py-2">{evento.local_do_evento}</td>
@@ -196,7 +195,7 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
                     </div>
 
                     <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
-                        <h2 className="mb-4 text-xl font-black text-primary">Resumo de Eventos</h2>
+                        <h2 className="mb-4 text-xl font-black text-primary dark:text-white">Resumo de Eventos</h2>
                         <ResponsiveContainer width="100%" height={250}>
                             <PieChart>
                                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>

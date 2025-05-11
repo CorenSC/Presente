@@ -20,6 +20,7 @@ interface Evento {
     hora_fim: string;
     descricao: string;
     atividades: Atividades[];
+    link_liberado: boolean;
 }
 
 export default function EventoShow() {

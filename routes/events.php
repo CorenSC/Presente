@@ -37,17 +37,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('eventoShow');
 
+
+    Route::put('evento/inativar/{evento}', [EventoController::class, 'destroy'])->name('inativarEvento');
+    Route::put('evento/link-liberar/{id}', [EventoController::class, 'createLinkForSignUp'])->name('liberarLinkCadastro');
+    Route::put('evento/criar-qrCode/{evento}', [EventoController::class, 'createQrCode'])->name('liberarQrCode');
     Route::get('evento/formulario-cadastro/{id}', function ($id) {
 
         $evento = Evento::findOrFail($id);
-        if (!$evento->qrCodeGerado) {
+        if (!$evento->link_liberado) {
             abort(404);
         }
 
         return Inertia::render('events/evento-form-cadastro', [
             'evento' => $evento,
         ]);
-    })->name('eventoCadastrar');
-
-    Route::put('evento/inativar/{evento}', [EventoController::class, 'destroy'])->name('inativarEvento');
+    })->name('cadastrarParticipante');
 });

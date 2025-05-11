@@ -130,7 +130,7 @@ class EventoController extends Controller
             return redirect()
                 ->route('eventoShow', ['id' => $evento->id])
                 ->with('success', 'Evento atualizado com sucesso.')
-                ;
+            ;
 
         } catch (ValidationException $exception) {
             return Inertia::render('events/editar-evento', [
@@ -149,5 +149,26 @@ class EventoController extends Controller
         $evento->ativo = false;
         $evento->save();
         return redirect()->route('listarEventos')->with('success', 'Evento inativado com sucesso.');
+    }
+
+    public function createLinkForSignUp($id)
+    {
+        $evento = Evento::findOrFail($id);
+        $evento->link_liberado = true;
+        $evento->save();
+        return redirect()
+            ->route('eventoShow', ['id' => $evento->id])
+            ->with('success', 'Link para cadastro no evento ativado com sucesso.')
+        ;
+    }
+
+    public function createQrCode(Evento $evento)
+    {
+        $evento->linkLiberado = true;
+        $evento->save();
+        return redirect()
+            ->route('eventoShow', ['id' => $evento->id])
+            ->with('success', 'QrCode para confirmar participação no evento gerado com sucesso.')
+        ;
     }
 }

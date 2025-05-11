@@ -2,7 +2,9 @@ import { FaCalendarAlt, FaClock, FaLink, FaMapMarkerAlt, FaQrcode } from 'react-
 import { BiSolidEdit  } from "react-icons/bi";
 import { useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
-
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ClipboardCopy } from 'lucide-react';
 
 type Atividade = {
     nome: string;
@@ -19,7 +21,8 @@ interface Evento {
     hora_inicio: string;
     hora_fim: string;
     descricao: string;
-    atividades: Atividade[]
+    atividades: Atividade[];
+    link_liberado: boolean;
 }
 
 const formatDate = (date: string | undefined) => {
@@ -34,24 +37,42 @@ const formatTime = (time: string | undefined) => {
 };
 
 export default function EventoDetalhes({ evento }: { evento: Evento }) {
-    const gerarLinkCadastro = () => {
-        const link = `/evento/${evento.id}/cadastro`;
-        alert(`Link de cadastro:\n${link}`);
-    };
+
 
     const gerarQrCode = () => {
         alert(`QR Code gerado para o evento: ${evento.nome}`);
     };
 
-    const { get } = useForm({});
+    const { get, put } = useForm({});
     const editarEvento = (e: FormEvent) => {
         e.preventDefault();
         get(route('editarEvento', evento.id), {});
+    };
 
-    }
+    const gerarLinkCadastro = () => {
+        if (evento) {
+            put(route('liberarLinkCadastro', evento.id), {});
+        }
+    };
 
     return (
         <div className="mx-auto mt-12 max-w-4xl space-y-8 rounded-3xl border border-gray-100 bg-white p-8 shadow-xl text-primary dark:bg-gray-800 dark:text-white dark:border-none">
+            {evento.link_liberado &&
+                <Alert className="justify-self-center lg:w-full" variant="info">
+                    <AlertTitle variant="info">Link para se cadastrar no evento</AlertTitle>
+                        <AlertDescription className='flex gap-4 items-center'>localhost:8000/evento/formulario-cadastro/{evento.id}
+                        <Button
+                            onClick={() => {
+                                navigator.clipboard.writeText(`http://localhost:8000/evento/formulario-cadastro/${evento.id}`);
+                            }}
+                            className='px-2 py-1 w-10'
+                            title='Copiar'
+                        >
+                            <ClipboardCopy className='w-5'/>
+                        </Button>
+                    </AlertDescription>
+                </Alert>
+            }
             <div className="space-y-2 text-center">
                 <h1 className="text-4xl font-bold tracking-tight">{evento.nome}</h1>
                 <p className="text-sm">Descrição do evento: {evento.descricao}</p>
