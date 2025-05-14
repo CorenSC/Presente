@@ -32,8 +32,8 @@ type Evento = {
 function ListaEvento() {
     const { eventos } = usePage().props as unknown as { eventos: Evento[] };
     const [globalFilter, setGlobalFilter] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar a modal
-    const [eventoId, setEventoId] = useState<number | null>(null); // Guardar o id do evento para inativar
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [eventoId, setEventoId] = useState<number | null>(null);
 
     const { props } = usePage();
     //@ts-ignore

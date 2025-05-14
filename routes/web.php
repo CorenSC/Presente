@@ -1,11 +1,9 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EventoController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
- Route::get('/', function () {
+Route::get('/', function () {
      return redirect()->route('login');
  })->name('home');
 
@@ -14,4 +12,5 @@ use Inertia\Inertia;
  });
 
 require __DIR__ . '/events.php';
+require __DIR__ . '/participantes.php';
 require __DIR__.'/auth.php';

@@ -18,11 +18,15 @@ return new class extends Migration
             $table->text('descricao');
             $table->date('data_inicio');
             $table->date('data_fim');
+            $table->date('cadastro_abertura')->nullable();
+            $table->date('cadastro_encerramento')->nullable();
             $table->time('hora_inicio');
             $table->time('hora_fim');
             $table->boolean('ativo')->default(true);
             $table->boolean('link_liberado')->default(false);
             $table->boolean('qr_code_gerado')->default(false);
+            $table->longText('qr_code_base64')->nullable();
+            $table->char('sha256_token', 64)->unique();
             $table->timestamps();
         });
     }

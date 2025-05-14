@@ -1,6 +1,6 @@
 import { Input } from '@/components/ui/input';
 import DefaultLayout from '@/layouts/app/default-layout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,7 +29,6 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
     const eventosFiltrados = eventos.filter((evento) => {
         if (mesSelecionado !== 'todos') {
             const mesAnoEvento = evento.data_inicio.slice(0, 7);
-            console.log(mesAnoEvento, mesSelecionado);
             if (mesAnoEvento !== mesSelecionado) return false;
         }
 
@@ -43,12 +42,24 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
     });
 
     const hoje = new Date();
-    const eventosPassados = eventosFiltrados.filter((e) => new Date(e.data_fim) < hoje);
-    const eventosFuturos = eventosFiltrados.filter((e) => new Date(e.data_inicio) >= hoje);
+    const eventosPassados = eventosFiltrados.filter((e) => {
+        const fimCompleto = new Date(`${e.data_fim}T${e.hora_fim}`);
+        return fimCompleto < hoje;
+    })
+    const eventosFuturos = eventosFiltrados.filter((e) => {
+        const inicioCompleto = new Date(`${e.data_inicio}T${e.hora_inicio}`);
+        return inicioCompleto > hoje;
+    });
+    const eventosEmAndamento = eventosFiltrados.filter((e) => {
+        const inicioCompleto = new Date(`${e.data_inicio}T${e.hora_inicio}`);
+        const fimCompleto = new Date(`${e.data_fim}T${e.hora_fim}`);
+        return inicioCompleto <= hoje && fimCompleto >= hoje;
+    });
 
     const pieData = [
-        { name: 'Eventos Realizados', value: eventosPassados.length },
-        { name: 'Eventos Futuros', value: eventosFuturos.length },
+        { name: 'Eventos realizados', value: eventosPassados.length },
+        { name: 'Eventos em andamento', value: eventosEmAndamento.length },
+        { name: 'Eventos pendentes', value: eventosFuturos.length },
     ];
 
     const mesesDoAno = [
@@ -56,7 +67,7 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
-    const cores = ['#104E64FF', '#009689FF'];
+    const cores = ['#104E64FF', '#FFD166', '#009689FF'];
 
     useEffect(() => {
         const timer = setTimeout(() => setLoading(false), 1500);
@@ -111,11 +122,8 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
                 </header>
 
                 <div className="mb-6">
-                    <Select
-                        value={mesSelecionado}
-                        onValueChange={(value) => setMesSelecionado(value)}
-                    >
-                        <SelectTrigger className="bg-white text-primary w-1/6 mb-4 border-none rounded p-2 text-sm shadow dark:bg-gray-800 dark:text-white">
+                    <Select value={mesSelecionado} onValueChange={(value) => setMesSelecionado(value)}>
+                        <SelectTrigger className="text-primary mb-4 w-1/6 rounded border-none bg-white p-2 text-sm shadow dark:bg-gray-800 dark:text-white">
                             <SelectValue placeholder="--Selecione o mês--" />
                         </SelectTrigger>
                         <SelectContent>
@@ -129,73 +137,114 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
                     </Select>
 
                     <div className="flex space-x-4">
-                        <div>
-                            <Input
-                                placeholder="dd/mm/aaaa"
-                                id="dataInicio"
-                                label="Data início:"
-                                value={dataInicio}
-                                onChange={(e) => setDataInicio(e.target.value)}
-                                className="text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
-                                type="date"
-                            />
-                        </div>
-                        <div>
-                            <Input
-                                placeholder="dd/mm/aaaa"
-                                id="dataFim"
-                                label="Data fim:"
-                                value={dataFim}
-                                onChange={(e) => setDataFim(e.target.value)}
-                                className="text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
-                                type="date"
-                            />
-                        </div>
+                        <Input
+                            placeholder="dd/mm/aaaa"
+                            id="dataInicio"
+                            label="Data início:"
+                            value={dataInicio}
+                            onChange={(e) => setDataInicio(e.target.value)}
+                            className="text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
+                            type="date"
+                        />
+                        <Input
+                            placeholder="dd/mm/aaaa"
+                            id="dataFim"
+                            label="Data fim:"
+                            value={dataFim}
+                            onChange={(e) => setDataFim(e.target.value)}
+                            className="text-primary border text-sm shadow-md dark:border-none dark:bg-gray-800 dark:text-white"
+                            type="date"
+                        />
+                    </div>
+                </div>
+
+                <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-4">
+                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
+                        <h2 className="text-primary text-lg font-black dark:text-white">Total de Eventos</h2>
+                        <p className="text-primary text-2xl font-bold dark:text-white">{eventosFiltrados.length}</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
+                        <h2 className="text-primary text-lg font-black dark:text-white">Eventos Realizados</h2>
+                        <p className="text-primary text-2xl font-bold dark:text-white">{eventosPassados.length}</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
+                        <h2 className="text-primary text-lg font-black dark:text-white">Eventos em Andamento</h2>
+                        <p className="text-primary text-2xl font-bold dark:text-white">{eventosEmAndamento.length}</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
+                        <h2 className="text-primary text-lg font-black dark:text-white">Eventos Pendentes</h2>
+                        <p className="text-primary text-2xl font-bold dark:text-white">{eventosFuturos.length}</p>
                     </div>
                 </div>
 
                 <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-black text-primary dark:text-white">Total de Eventos</h2>
-                        <p className="text-2xl font-bold text-primary dark:text-white">{eventosFiltrados.length}</p>
-                    </div>
-
-                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-black text-primary dark:text-white">Eventos Realizados</h2>
-                        <p className="text-2xl font-bold text-primary dark:text-white">{eventosPassados.length}</p>
-                    </div>
-
-                    <div className="rounded-2xl bg-white p-4 shadow dark:bg-gray-800">
-                        <h2 className="text-lg font-black text-primary dark:text-white">Eventos Pendentes</h2>
-                        <p className="text-2xl font-bold text-primary dark:text-white">{eventosFuturos.length}</p>
-                    </div>
-                </div>
-
-                <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
-                        <h2 className="mb-4 text-xl font-semibold text-primary dark:text-white">Próximos Eventos</h2>
+                        <h2 className="text-primary mb-4 text-xl font-semibold dark:text-white">Eventos em andamento</h2>
                         <table className="w-full table-auto">
                             <thead>
-                            <tr className="text-left text-sm text-gray-400">
-                                <th className="pb-2">Nome</th>
-                                <th className="pb-2">Data</th>
-                                <th className="pb-2">Local</th>
-                            </tr>
+                                <tr className="text-left text-sm text-gray-400">
+                                    <th className="pb-2">Nome</th>
+                                    <th className="pb-2">Data</th>
+                                    <th className="pb-2">Local</th>
+                                    <th className="pb-2">Ações</th>
+                                </tr>
                             </thead>
                             <tbody>
-                            {eventosFuturos.map((evento) => (
-                                <tr key={evento.id} className="border-t font-black text-primary dark:text-white">
-                                    <td className="py-2">{evento.nome}</td>
-                                    <td className="py-2">{formatarDataBrasileira(evento.data_inicio)}</td>
-                                    <td className="py-2">{evento.local_do_evento}</td>
-                                </tr>
-                            ))}
+                                {eventosEmAndamento.map((evento) => (
+                                    <tr key={evento.id} className="text-primary border-t font-black dark:text-white">
+                                        <td className="py-2">{evento.nome}</td>
+                                        <td className="py-2">{formatarDataBrasileira(evento.data_inicio)}</td>
+                                        <td className="py-2">{evento.local_do_evento}</td>
+                                        <td className="py-2">
+                                            <Link
+                                                href={route('detalhesEvento', evento.id)}
+                                                className="bg-primary hover:bg-primary-foreground cursor-pointer rounded px-4 py-2 text-center font-semibold text-white shadow-2xl transition-all active:scale-95"
+                                            >
+                                                Detalhes
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
 
                     <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
-                        <h2 className="mb-4 text-xl font-black text-primary dark:text-white">Resumo de Eventos</h2>
+                        <h2 className="text-primary mb-4 text-xl font-semibold dark:text-white">Próximos Eventos</h2>
+                        <table className="w-full table-auto">
+                            <thead>
+                                <tr className="text-left text-sm text-gray-400">
+                                    <th className="pb-2">Nome</th>
+                                    <th className="pb-2">Data</th>
+                                    <th className="pb-2">Local</th>
+                                    <th className="pb-2">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {eventosFuturos.map((evento) => (
+                                    <tr key={evento.id} className="text-primary border-t font-black dark:text-white">
+                                        <td className="py-2">{evento.nome}</td>
+                                        <td className="py-2">{formatarDataBrasileira(evento.data_inicio)}</td>
+                                        <td className="py-2">{evento.local_do_evento}</td>
+                                        <td className="py-2">
+                                            <Link
+                                                href={route('detalhesEvento', evento.id)}
+                                                className="bg-primary hover:bg-primary-foreground cursor-pointer rounded px-4 py-2 text-center font-semibold text-white shadow-2xl transition-all active:scale-95"
+                                            >
+                                                Detalhes
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-800">
+                        <h2 className="text-primary mb-4 text-xl font-black dark:text-white">Resumo de Eventos</h2>
                         <ResponsiveContainer width="100%" height={250}>
                             <PieChart>
                                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>

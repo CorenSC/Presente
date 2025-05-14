@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 /**
  * @method static \Illuminate\Database\Eloquent\Builder create(array $attributes)
@@ -23,7 +24,8 @@ class Evento extends Model
         'hora_fim',
         'ativo',
         'link_liberado',
-        'qr_code_gerado'
+        'qr_code_gerado',
+        'qr_code_base64'
     ];
 
     /**
@@ -50,5 +52,14 @@ class Evento extends Model
     public function atividades()
     {
         return $this->hasMany(Atividade::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($evento) {
+            $evento->sha256_token = hash('sha256', Str::uuid());
+        });
     }
 }

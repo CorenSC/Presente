@@ -21,6 +21,7 @@ interface Evento {
     descricao: string;
     atividades: Atividades[];
     link_liberado: boolean;
+    qr_code_gerado: boolean;
 }
 
 export default function EventoShow() {

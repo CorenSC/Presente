@@ -15,10 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('nome');
             $table->string('cpf');
-            $table->string('telefone');
             $table->string('email');
+            $table->string('telefone');
+            $table->string('instituicao')->nullable();
+            $table->string('municipio');
             $table->string('categoria_profissional');
-            $table->bigInteger('numero_inscricao');
+            $table->bigInteger('numero_inscricao')->nullable();
             $table->timestamps();
         });
     }

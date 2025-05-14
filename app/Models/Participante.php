@@ -16,6 +16,8 @@ class Participante extends Model
         'email',
         'categoria_profissional',
         'numero_inscricao',
+        'municipio',
+        'instituicao'
     ];
 
     public function eventos()

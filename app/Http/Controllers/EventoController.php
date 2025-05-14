@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Evento;
 use Carbon\Carbon;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -141,6 +144,48 @@ class EventoController extends Controller
         }
     }
 
+    public function detalhesEvento($id) {
+        $inscricoesPorDia = DB::table('evento_participante')
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->where('evento_id', $id)
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date', 'asc')
+            ->get();
+
+        $evento = DB::table('eventos')
+            ->select('nome')
+            ->where('id', $id)
+            ->first();
+
+        return Inertia::render('events/detalhe-evento', [
+            'chartData' => $inscricoesPorDia,
+            'eventoNome' => $evento?->nome,
+            'eventoId' => $id
+        ]);
+    }
+
+    public function detalhesParticipante($id)
+    {
+        $participantes = DB::table('evento_participante')
+            ->join('participantes', 'evento_participante.participante_id', '=', 'participantes.id')
+            ->select(
+                'participantes.nome',
+                'participantes.instituicao',
+                'participantes.categoria_profissional',
+                DB::raw('DATE(evento_participante.created_at) as data_inscricao')
+            )
+            ->where('evento_participante.evento_id', $id)
+            ->orderBy('evento_participante.created_at', 'desc')
+            ->get();
+
+        return Inertia::render('events/detalhe-participantes', [
+            'participantes' => $participantes
+        ]);
+    }
+
     /**
      * Remove the specified resource from storage.
      */
@@ -151,24 +196,57 @@ class EventoController extends Controller
         return redirect()->route('listarEventos')->with('success', 'Evento inativado com sucesso.');
     }
 
-    public function createLinkForSignUp($id)
+    public function createLinkForSignUp($id, Request $request)
     {
-        $evento = Evento::findOrFail($id);
-        $evento->link_liberado = true;
-        $evento->save();
-        return redirect()
-            ->route('eventoShow', ['id' => $evento->id])
-            ->with('success', 'Link para cadastro no evento ativado com sucesso.')
-        ;
+        try {
+            $validated = $request->validate([
+                'cadastro_abertura' => 'required|date',
+                'cadastro_encerramento' => 'required|date',
+
+            ], [
+                'cadastro_abertura.required' => 'O campo de data início é obrigatório',
+                'cadastro_encerramento.required' => 'O campo de data fim é obrigatório'
+            ]);
+
+            $evento = Evento::findOrFail($id);
+
+            $evento->update([
+                'cadastro_abertura' => $validated['cadastro_abertura'],
+                'cadastro_encerramento' => $validated['cadastro_encerramento'],
+                'link_liberado' => true,
+            ]);
+
+            return redirect()
+                ->route('eventoShow', ['id' => $evento->id])
+                ->with('success', 'Link para cadastro no evento ativado com sucesso.')
+            ;
+
+        } catch (ValidationException $exception) {
+            return redirect()->back()->withErrors($exception->errors());
+        }
     }
 
     public function createQrCode(Evento $evento)
     {
-        $evento->linkLiberado = true;
-        $evento->save();
-        return redirect()
-            ->route('eventoShow', ['id' => $evento->id])
-            ->with('success', 'QrCode para confirmar participação no evento gerado com sucesso.')
-        ;
+        try {
+            $url = route('confirmarPresenca', ['id' => $evento->id]);
+
+            $qrCode = new QrCode($url);
+
+            $writer = new PngWriter();
+            $qrCodeData = $writer->write($qrCode);
+            $base64 = base64_encode($qrCodeData->getString());
+
+            $evento->qr_code_base64 = $base64;
+            $evento->qr_code_gerado = true;
+            $evento->save();
+
+            return redirect()
+                ->route('eventoShow', ['id' => $evento->id])
+                ->with('success', 'QrCode para confirmar participação no evento gerado com sucesso.')
+                ;
+        } catch (\Exception $exception) {
+            return redirect()->back()->withErrors($exception->errors());
+        }
     }
 }

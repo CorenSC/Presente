@@ -120,8 +120,8 @@ export default function EditarEvento({evento}: EditarEventoProps) {
         if (evento.atividades && evento.atividades.length > 0) {
             formattedEvent.atividades = evento.atividades.map(atividade => ({
                 ...atividade,
-                hora_inicio: atividade.hora_inicio?.slice(0, 5),
-                hora_fim: atividade.hora_fim?.slice(0, 5),
+                hora_inicio: atividade.hora_inicio.slice(0,5),
+                hora_fim: atividade.hora_fim,
             }));
         }
         setData(formattedEvent);
@@ -278,7 +278,7 @@ export default function EditarEvento({evento}: EditarEventoProps) {
                                             <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
                                                 Hora início:
                                                 <Select
-                                                    value={atividade.hora_inicio}
+                                                    value={atividade.hora_inicio.slice(0,5)}
                                                     onValueChange={(value) => atualizarAtividade(index, 'hora_inicio', value)}
                                                 >
                                                     <SelectTrigger>
@@ -298,7 +298,7 @@ export default function EditarEvento({evento}: EditarEventoProps) {
                                             <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
                                                 Hora fim:
                                                 <Select
-                                                    value={atividade.hora_fim}
+                                                    value={atividade.hora_fim.slice(0,5)}
                                                     onValueChange={(value) => atualizarAtividade(index, 'hora_fim', value)}
                                                 >
                                                     <SelectTrigger>

@@ -41,15 +41,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('evento/inativar/{evento}', [EventoController::class, 'destroy'])->name('inativarEvento');
     Route::put('evento/link-liberar/{id}', [EventoController::class, 'createLinkForSignUp'])->name('liberarLinkCadastro');
     Route::put('evento/criar-qrCode/{evento}', [EventoController::class, 'createQrCode'])->name('liberarQrCode');
-    Route::get('evento/formulario-cadastro/{id}', function ($id) {
 
-        $evento = Evento::findOrFail($id);
-        if (!$evento->link_liberado) {
-            abort(404);
-        }
-
-        return Inertia::render('events/evento-form-cadastro', [
-            'evento' => $evento,
-        ]);
-    })->name('cadastrarParticipante');
+    Route::get('evento/detalhes/{id}', [EventoController::class, 'detalhesEvento'])->name('detalhesEvento');
+    Route::get('evento/detalhes/participantes/{id}', [EventoController::class, 'detalhesParticipante'])->name('detalheParticipantes');
 });
+
+
+Route::get('evento/formulario-cadastro/{id}', function ($id) {
+
+    $evento = Evento::with('atividades')->findOrFail($id);
+    if (!$evento->link_liberado) {
+        abort(404);
+    }
+
+    return Inertia::render('events/evento-form-cadastro', [
+        'evento' => $evento,
+    ]);
+})->name('cadastrarParticipante');
