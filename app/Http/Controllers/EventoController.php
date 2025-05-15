@@ -173,6 +173,7 @@ class EventoController extends Controller
             ->join('participantes', 'evento_participante.participante_id', '=', 'participantes.id')
             ->select(
                 'participantes.nome',
+                'participantes.cpf',
                 'participantes.instituicao',
                 'participantes.categoria_profissional',
                 DB::raw('DATE(evento_participante.created_at) as data_inscricao')
@@ -181,8 +182,14 @@ class EventoController extends Controller
             ->orderBy('evento_participante.created_at', 'desc')
             ->get();
 
+        $evento = DB::table('eventos')
+            ->select('nome')
+            ->where('id', $id)
+            ->first();
+
         return Inertia::render('events/detalhe-participantes', [
-            'participantes' => $participantes
+            'participantes' => $participantes,
+            'eventoNome' => $evento?->nome,
         ]);
     }
 

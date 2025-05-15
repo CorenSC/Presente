@@ -11,12 +11,13 @@ import {
 import { Head, Link } from '@inertiajs/react';
 import DefaultLayout from '@/layouts/app/default-layout';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { formatarDataBrasileira } from '@/lib/utils';
 
 // @ts-ignore
 export default function EventoDetalhe({ chartData, eventoNome, eventoId }) {
     const formatData = chartData.map((item: { date: string | number | Date; count: any }) => ({
-        name: new Date(item.date).toLocaleDateString('pt-BR'),
+        // @ts-ignore
+        name: formatarDataBrasileira(item.date),
         count: item.count,
     }));
 

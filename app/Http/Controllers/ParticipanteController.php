@@ -110,7 +110,7 @@ class ParticipanteController extends Controller
                 ->where('participante_id', $participante->id)
                 ->update(['status' => 'confirmado']);
 
-            return redirect()->route('cadastroRealizado', ['id' => $participante->id]);
+            return redirect()->route('confirmacaoFeita', ['id' => $participante->id]);
 
         } catch (ValidationException $exception) {
             return Redirect::back()

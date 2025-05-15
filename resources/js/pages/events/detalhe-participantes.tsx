@@ -7,6 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { StepBack, StepForward } from 'lucide-react';
 import { formatarDataBrasileira } from '@/lib/utils';
+import * as XLSX from 'xlsx';
+import { FaFileExcel } from 'react-icons/fa';
 
 type Participante = {
     nome: string;
@@ -14,7 +16,28 @@ type Participante = {
     data_inscricao: string;
 };
 
-export default function DetalheParticipantes() {
+//@ts-ignore
+export default function DetalheParticipantes({eventoNome}) {
+
+    const handleDownload = () => {
+        const worksheet = XLSX.utils.json_to_sheet(participantes);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Participantes");
+
+        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsm', type: 'array' });
+        const blob = new Blob([excelBuffer], {
+            type: 'application/vnd.ms-excel.sheet.macroEnabled.12',
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `participantes_${eventoNome}.xlsm`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     const { props } = usePage();
     const participantes = props.participantes as Participante[];
 
@@ -24,6 +47,10 @@ export default function DetalheParticipantes() {
         {
             accessorKey: 'nome',
             header: 'Nome',
+        },
+        {
+            accessorKey: 'cpf',
+            header: 'CPF',
         },
         {
             accessorKey: 'categoria_profissional',
@@ -61,7 +88,7 @@ export default function DetalheParticipantes() {
             <Head title='Detalhe Participantes' />
             <DefaultLayout>
                 <div className="p-6">
-                    <h2 className="text-2xl font-bold mb-4 text-primary dark:text-white">Participantes do Evento</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-primary dark:text-white">Participantes do(a) {eventoNome}</h2>
 
                     <div className="mb-4 flex items-center gap-4">
                         <Input
@@ -84,6 +111,13 @@ export default function DetalheParticipantes() {
                                 ))}
                             </select>
                         </div>
+                        <Button
+                            onClick={handleDownload}
+                            className="ml-auto flex items-center justify-center bg-green-600 hover:bg-green-700 text-white w-16"
+                            title='Baixar excel'
+                        >
+                            <FaFileExcel />
+                        </Button>
                     </div>
 
                     {participantes.length === 0 && (

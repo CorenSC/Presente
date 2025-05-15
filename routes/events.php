@@ -33,7 +33,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'evento' => Evento::with('atividades')->findOrFail($id),
             'flash' => [
                 'success' => Session::get('success'),
-            ]
+            ],
+            'app_url' => config('app.url'),
         ]);
     })->name('eventoShow');
 
@@ -50,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('evento/formulario-cadastro/{id}', function ($id) {
 
     $evento = Evento::with('atividades')->findOrFail($id);
-    if (!$evento->link_liberado) {
+    if (!$evento->link_liberado || !$evento->ativo) {
         abort(404);
     }
 

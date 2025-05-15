@@ -22,12 +22,16 @@ interface Evento {
     atividades: Atividades[];
     link_liberado: boolean;
     qr_code_gerado: boolean;
+    qr_code_base64: string;
+    ativo: boolean;
 }
 
 export default function EventoShow() {
     // @ts-ignore
-    const { flash, evento }: { flash: Record<string, any>; evento: Evento } = usePage().props;
+    const { flash, evento, app_url }: { flash: Record<string, any>; evento: Evento } = usePage().props;
     const successMessage = flash?.success;
+
+    console.log(app_url);
 
     const alertType = (['success', 'error', 'warning', 'info'].find(type => type in (flash || {})) || 'success') as 'success' | 'error' | 'warning' | 'info';
 
@@ -43,7 +47,7 @@ export default function EventoShow() {
                     </Alert>
                 )}
 
-                <EventoDetalhes evento={evento} />
+                <EventoDetalhes evento={evento} app_url={app_url} />
             </DefaultLayout>
         </>
     );

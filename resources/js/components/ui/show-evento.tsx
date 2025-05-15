@@ -43,7 +43,7 @@ const formatTime = (time: string | undefined) => {
     return time.slice(0, 5);
 };
 
-export default function EventoDetalhes({ evento }: { evento: Evento }) {
+export default function EventoDetalhes({ evento, app_url }: { evento: Evento; app_url: string }) {
     const [openModal, setOpenModal] = useState(false);
     const [validationErrors, setValidationErrors] = useState(null);
 
@@ -68,6 +68,7 @@ export default function EventoDetalhes({ evento }: { evento: Evento }) {
     const handleConfirmarLink = () => {
         put(route('liberarLinkCadastro', evento.id), {
             onSuccess: () => {
+                setValidationErrors(null);
                 setOpenModal(false);
             },
             onError: (errors) => {
@@ -97,10 +98,10 @@ export default function EventoDetalhes({ evento }: { evento: Evento }) {
                 <Alert className="justify-self-center lg:w-full" variant="info">
                     <AlertTitle variant="info">Link para se cadastrar no evento</AlertTitle>
                     <AlertDescription className="flex items-center gap-4">
-                        localhost:8000/evento/formulario-cadastro/{evento.id}
+                        {app_url}/evento/formulario-cadastro/{evento.id}
                         <Button
                             onClick={() => {
-                                navigator.clipboard.writeText(`http://localhost:8000/evento/formulario-cadastro/${evento.id}`);
+                                navigator.clipboard.writeText(`${app_url}/evento/formulario-cadastro/${evento.id}`);
                             }}
                             className="w-10 px-2 py-1"
                             title="Copiar"

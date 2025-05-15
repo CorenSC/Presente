@@ -4,8 +4,6 @@ import { formatarDataBrasileira } from '@/lib/utils';
 
 interface Evento {
     nome: string;
-    local_do_evento: string;
-    data_inicio: string;
 }
 
 interface Participante {
@@ -24,11 +22,13 @@ export default function CadastroRealizado({ participante }: ParticipanteProps) {
             <DefaultFormCadastro className="flex justify-center">
                 <div className="text-primary w-full p-4 lg:w-1/2 rounded-lg h-1/2 bg-white lg:p-8 shadow-lg dark:bg-gray-800 dark:text-white">
                     <h1 className="text-xl font-bold text-center text-green-600 dark:text-green-400">
-                        🎉 A sua confirmação realizada!
+                        🎉 A sua presença foi confirmada!
                     </h1>
-                    <p className="mt-4 text-center text-base lg:text-lg">
-                        Parabéns <span className="font-semibold">{participante.nome}</span>, sua confirmação para o evento foi realizada!
-                    </p>
+                    {participante.eventos?.map((evento, index) => (
+                        <p className="mt-4 text-center text-base lg:text-lg">
+                            Parabéns <span className="font-semibold">{participante.nome}</span>, sua presença para o evento <span className='font-semibold'>{evento.nome}</span> foi realizada!
+                        </p>
+                    ))}
                 </div>
             </DefaultFormCadastro>
         </>
