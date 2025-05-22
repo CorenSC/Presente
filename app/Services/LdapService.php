@@ -1,7 +1,8 @@
-<?php 
+<?php
 
 namespace App\Services;
 
+use App\Models\User;
 use Symfony\Component\Ldap\Ldap;
 
 class LdapService {
@@ -39,5 +40,27 @@ class LdapService {
         }
 
         return $resultadoFiltrado;
+    }
+
+    public function popularBancoComUsuariosLdap()
+    {
+        $usuariosLdap = $this->obterTodosUsersLdap();
+
+        $usuariosFormatados = array_map(function ($user) {
+            return [
+                'username' => $user['sAMAccountName'],
+                'nome' => $user['cn'],
+                'departamento' => $user['description'],
+                'ativo' => true,
+                'updated_at' => now(),
+                'created_at' => now(),
+            ];
+        }, $usuariosLdap);
+
+        User::upsert(
+            $usuariosFormatados,
+            ['username'],
+            ['nome', 'departamento', 'ativo', 'updated_at']
+        );
     }
 }
