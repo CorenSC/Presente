@@ -22,6 +22,8 @@ class User extends Authenticatable
         'username',
         'departamento',
         'ativo',
+        'pode_acessar',
+        'role'
     ];
 
     /**
@@ -30,9 +32,6 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'username',
-        'departamento',
-        'id',
         'password',
     ];
 
@@ -45,6 +44,7 @@ class User extends Authenticatable
     {
         return [
             'ativo' => 'boolean',
+            'pode_acessar' => 'boolean',
         ];
     }
 }

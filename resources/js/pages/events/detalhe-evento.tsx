@@ -30,7 +30,7 @@ export default function EventoDetalhe({ chartData, eventoNome, eventoId }) {
                         Inscrições por dia do {eventoNome}
                     </h2>
                     {formatData.length === 0 ? (
-                        <Alert className="flex items-center justify-center" variant="warning">
+                        <Alert className="justify-self-center" variant="warning">
                             <AlertTitle>Ainda não temos nenhum dado disponível.</AlertTitle>
                         </Alert>
                     ) : (

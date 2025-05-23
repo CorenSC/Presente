@@ -27,9 +27,8 @@ class InativarEventosExpirados extends Command
      */
     public function handle()
     {
-        $hoje = Carbon::now('America/Sao_Paulo')->startOfDay();
-
-        $eventos = Evento::whereDate('data_fim', '<', $hoje->toDateString())
+        $hoje = Carbon::now('America/Sao_Paulo');
+        $eventos = Evento::where('data_fim', '<', $hoje)
             ->where('ativo', true)
             ->get()
         ;
@@ -38,8 +37,10 @@ class InativarEventosExpirados extends Command
 
         foreach ($eventos as $evento) {
             $evento->ativo = false;
+            $evento->link_liberado = false;
+            $evento->qr_code_gerado = false;
             $evento->save();
-            $this->info("Evento Id $evento->id inativado}");
+            $this->info("Evento Id $evento->id inativado");
             $total++;
         }
 

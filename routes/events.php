@@ -5,8 +5,9 @@ use App\Models\Evento;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
+use \App\Http\Controllers\UsuarioController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('eventos', function () {
         return Inertia::render('events/eventos');
@@ -43,10 +44,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('evento/link-liberar/{id}', [EventoController::class, 'createLinkForSignUp'])->name('liberarLinkCadastro');
     Route::put('evento/criar-qrCode/{evento}', [EventoController::class, 'createQrCode'])->name('liberarQrCode');
 
+
+});
+
+Route::middleware(['auth', 'verified', 'role:admin,visualizador'])->group(function () {
     Route::get('evento/detalhes/{id}', [EventoController::class, 'detalhesEvento'])->name('detalhesEvento');
     Route::get('evento/detalhes/participantes/{id}', [EventoController::class, 'detalhesParticipante'])->name('detalheParticipantes');
 });
 
+Route::middleware(['auth', 'verified', 'role:visualizador'])->group(function () {
+    Route::get('visualizador', [UsuarioController::class, 'visualizadorEventos'])->name('visualizadorEventos');
+});
 
 Route::get('evento/formulario-cadastro/{id}', function ($id) {
 

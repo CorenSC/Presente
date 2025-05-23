@@ -12,9 +12,8 @@ const Navbar: React.FC = () => {
         setRotaAtual(window.location.pathname);
     }, []);
 
-    const linkClass = (path: string) => (rotaAtual === path ? 'text-gray-600 font-black' : 'hover:text-gray-400 transition');
+    const linkClass = (path: string) => (rotaAtual === path ? 'text-gray-500 font-black' : 'hover:text-gray-400 transition');
 
-    // @ts-ignore
     // @ts-ignore
     return (
         <nav className="bg-primary sticky top-0 z-50 px-6 py-4 text-white shadow-md dark:bg-[#1B2C40]">
@@ -44,6 +43,11 @@ const Navbar: React.FC = () => {
                         </Link>
                     </li>
                     <li>
+                        <Link href={route('usuarios')} className={linkClass('/usuario')}>
+                            Usuários
+                        </Link>
+                    </li>
+                    <li>
                         <Link href={route('logout')} className={`${linkClass('/logout')} flex items-center gap-2`}>
                             Sair <RxExit />
                         </Link>
@@ -60,7 +64,7 @@ const Navbar: React.FC = () => {
 
             {/* Menu mobile */}
             {menuAberto && (
-                <div className="animate-fade-in-down mt-4 space-y-2 text-sm text-white md:hidden">
+                <div className="animate-fade-in-down mt-4 space-y-2 text-sm text-white flex flex-col md:hidden">
                     <a href="/dashboard" className={linkClass('/dashboard')}>
                         Dashboard
                     </a>
@@ -70,8 +74,11 @@ const Navbar: React.FC = () => {
                     <a href="/relatorios" className={linkClass('/relatorios')}>
                         Relatórios
                     </a>
-                    <a href="/logout" className={linkClass('/logout')}>
-                        Sair
+                    <a href="/usuarios" className={linkClass('/usuarios')}>
+                        Usuários
+                    </a>
+                    <a href="/logout" className={`${linkClass('/logout')} flex items-center gap-2`}>
+                        Sair <RxExit />
                     </a>
                 </div>
             )}

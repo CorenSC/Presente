@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('username', 191)->unique();
             $table->string('departamento');
             $table->boolean('ativo')->default(true);
+            $table->string('role')->default('padrao');
+            $table->boolean('pode_acessar')->default(false);
             $table->timestamps();
         });
     }

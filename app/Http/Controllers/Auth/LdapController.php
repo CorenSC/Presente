@@ -57,10 +57,26 @@ class LdapController extends Controller
             $user->save();
         }
 
+        if (!$user->pode_acessar) {
+            return redirect()->back()->withErrors(['login_error' => 'Seu acesso ainda não foi liberado pelo administrador.']);
+        }
+
+        if ($user->role === 'padrao') {
+            return redirect()->back()->withErrors(['login_error' => 'Por padrão o seu usuário não pode acessar o sistema.']);
+        }
+
         Auth::login($user);
-        return redirect()->route('dashboard')->withHeaders([
-            'X-Inertia' => 'true',
-        ]);
+
+        switch ($user->role) {
+            case 'admin':
+                return redirect()->route('dashboard');
+
+            case 'visualizador':
+                return redirect()->route('visualizadorEventos');
+
+            default:
+                return redirect()->back()->withErrors(['login_error' => 'Por padrão o seu usuário não pode acessar o sistema.']);
+        }
     }
 
     public function logout(Request $request)

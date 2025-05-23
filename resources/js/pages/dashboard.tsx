@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatarDataBrasileira } from '@/lib/utils';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 
 interface Evento {
     id: number;
@@ -118,7 +119,7 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
             <Head title="Dashboard" />
             <DefaultLayout>
                 <header className="mb-6">
-                    <h1 className="text-primary text-3xl font-bold dark:text-white">Dashboard de Eventos</h1>
+                    <h1 className="text-primary text-3xl font-bold dark:text-white">Dashboard</h1>
                 </header>
 
                 {eventos.length > 0 && (
@@ -274,6 +275,12 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
                             </div>
                         </div>
                     </>
+                )}
+
+                {eventos.length == 0 && (
+                    <Alert variant='warning' className='self-center justify-self-center'>
+                        <AlertTitle variant='warning'>Ainda não tem nenhum evento cadastrado!</AlertTitle>
+                    </Alert>
                 )}
             </DefaultLayout>
         </>

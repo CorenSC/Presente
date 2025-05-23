@@ -31,8 +31,6 @@ export default function EventoShow() {
     const { flash, evento, app_url }: { flash: Record<string, any>; evento: Evento } = usePage().props;
     const successMessage = flash?.success;
 
-    console.log(app_url);
-
     const alertType = (['success', 'error', 'warning', 'info'].find(type => type in (flash || {})) || 'success') as 'success' | 'error' | 'warning' | 'info';
 
     return (
