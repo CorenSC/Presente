@@ -59,8 +59,6 @@ export default function DeleteUser() {
                                     id="password"
                                     type="password"
                                     name="password"
-                                    ref={passwordInput}
-                                    value={data.password}
                                     onChange={(e) => setData('password', e.target.value)}
                                     placeholder="Password"
                                     autoComplete="current-password"

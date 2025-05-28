@@ -1,6 +1,6 @@
 import { FaCalendarAlt, FaClock, FaLink, FaMapMarkerAlt, FaQrcode } from 'react-icons/fa';
 import { BiSolidEdit  } from "react-icons/bi";
-import { useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -15,6 +15,7 @@ import {
     DialogTrigger
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { FaChartBar } from "react-icons/fa";
 
 type Atividade = {
     nome: string;
@@ -232,6 +233,13 @@ export default function EventoDetalhes({ evento, app_url }: { evento: Evento; ap
                         <span className="text-sm font-medium">Editar</span>
                     </button>
                 )}
+                <Link
+                    href={route('detalhesEvento', evento.id)}
+                    className="flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-gray-600/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-gray-700 active:scale-95"
+                >
+                    <FaChartBar className="text-xl" />
+                    <span className="text-sm font-medium">Mais detalhes</span>
+                </Link>
             </div>
         </div>
     );

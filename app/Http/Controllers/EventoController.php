@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\ParticipantesImport;
 use App\Models\Evento;
 use Carbon\Carbon;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Validators\ValidationException as ExcelValidationException;
 
 class EventoController extends Controller
 {
@@ -19,7 +23,11 @@ class EventoController extends Controller
     public function list()
     {
         return Inertia::render('events/lista-evento', [
-            'eventos' => Evento::all()
+            'eventos' => Evento::all(),
+            'flash' => [
+                'success' => Session::get('success'),
+                'error' => Session::get('error'),
+            ],
         ]);
     }
 
@@ -254,6 +262,35 @@ class EventoController extends Controller
                 ;
         } catch (\Exception $exception) {
             return redirect()->back()->withErrors($exception->errors());
+        }
+    }
+
+    public function importarParticipantes(Request $request)
+    {
+        try {
+            $request->validate([
+                'arquivo' => 'required|file|mimes:xlsx,xls|max:102400', // 100MB
+                'evento_id' => 'required'
+            ], [
+                'arquivo.mimes' => 'O arquivo deve ser no formato Excel, XLSX ou XLS!',
+                'arquivo.max' => 'O tamanho máximo permitido para o arquivo é 100MB.'
+            ]);
+
+            Excel::import(new ParticipantesImport($request->evento_id), $request->file('arquivo'));
+
+            return redirect()->route('listarEventos')->with('success', 'Participantes importados com sucesso.');
+        } catch (ExcelValidationException $e) {
+            $messages = [];
+
+            foreach ($e->failures() as $failure) {
+                foreach ($failure->errors() as $error) {
+                    $messages[] = $error;
+                }
+            }
+
+            return redirect()->back()->withErrors($messages);
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors());
         }
     }
 }

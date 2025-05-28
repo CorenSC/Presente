@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::put('evento/link-liberar/{id}', [EventoController::class, 'createLinkForSignUp'])->name('liberarLinkCadastro');
     Route::put('evento/criar-qrCode/{evento}', [EventoController::class, 'createQrCode'])->name('liberarQrCode');
 
+    Route::post('evento/importar/participantes', [EventoController::class, 'importarParticipantes'])->name('importarParticipantes');
 
 });
 
