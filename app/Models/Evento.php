@@ -62,4 +62,11 @@ class Evento extends Model
             $evento->sha256_token = hash('sha256', Str::uuid());
         });
     }
+
+    public function validadores()
+    {
+        return $this->belongsToMany(User::class, 'evento_user_validacoes')
+            ->withPivot(['validado_em'])
+            ->withTimestamps();
+    }
 }

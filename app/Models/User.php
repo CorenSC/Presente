@@ -47,4 +47,12 @@ class User extends Authenticatable
             'pode_acessar' => 'boolean',
         ];
     }
+
+
+    public function eventosValidados()
+    {
+        return $this->belongsToMany(Evento::class, 'evento_user_validacoes')
+            ->withPivot('validado_em')
+            ->withTimestamps();
+    }
 }

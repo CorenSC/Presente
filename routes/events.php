@@ -46,6 +46,17 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::post('evento/importar/participantes', [EventoController::class, 'importarParticipantes'])->name('importarParticipantes');
 
+    Route::get('relatorios/participantes', [EventoController::class, 'relatorioView'])->name('relatorios');
+
+    Route::post('relatorios/evento', [EventoController::class, 'gerarRelatorio'])->name('gerarRelatorio');
+
+    Route::post('/relatorios/evento/exportar', [EventoController::class, 'exportarExcel'])->name('exportarExcel');
+
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('validar-hash', [EventoController::class, 'showValidacaoForm'])->name('validarHashForm');
+    Route::post('validar-hash', [EventoController::class, 'validarHash'])->name('validarHash');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,visualizador'])->group(function () {

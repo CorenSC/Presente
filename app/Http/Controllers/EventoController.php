@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ParticipantesExport;
 use App\Imports\ParticipantesImport;
 use App\Models\Evento;
 use Carbon\Carbon;
@@ -14,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\ValidationException as ExcelValidationException;
+use Illuminate\Support\Str;
 
 class EventoController extends Controller
 {
@@ -291,6 +293,142 @@ class EventoController extends Controller
             return redirect()->back()->withErrors($messages);
         } catch (ValidationException $e) {
             return redirect()->back()->withErrors($e->errors());
+        }
+    }
+
+    public function relatorioView(Request $request)
+    {
+        $eventos = Evento::select('id', 'nome')->orderBy('nome')->get();
+
+        $participantes = [];
+        $colunasSelecionadas = [];
+        $eventoSelecionado = null;
+
+        // Pega filtros da session
+        $filtros = $request->session()->get('relatorio_filtros');
+
+        if ($filtros) {
+            $evento = Evento::with('participantes')->findOrFail($filtros['evento_id']);
+            $eventoSelecionado = $evento->id;
+
+            $participantes = $evento->participantes->map(function ($p) use ($filtros) {
+                $dados = [];
+
+                foreach ($filtros['colunas'] as $coluna) {
+                    if ($coluna === 'data_inscricao') {
+                        $dados['data_inscricao'] = $p->pivot->created_at->format('d/m/Y H:i');
+                    } elseif ($coluna === 'status') {
+                        $dados['status'] = $p->pivot->status;
+                    } else {
+                        $dados[$coluna] = $p->{$coluna} ?? '-';
+                    }
+                }
+
+                return $dados;
+            });
+
+            $colunasSelecionadas = $filtros['colunas'];
+
+            // Opcional: limpa os filtros da session, para não ficar armazenado
+            $request->session()->forget('relatorio_filtros');
+        }
+
+        return Inertia::render('relatorios/relatorio-participante', [
+            'eventos' => $eventos,
+            'participantes' => $participantes,
+            'colunasSelecionadas' => $colunasSelecionadas,
+            'eventoSelecionado' => $eventoSelecionado,
+        ]);
+    }
+
+    public function gerarRelatorio(Request $request)
+    {
+        $request->validate([
+            'evento_id' => 'required|exists:eventos,id',
+            'colunas' => 'array',
+        ]);
+
+        // Armazena filtros na sessão
+        $request->session()->put('relatorio_filtros', [
+            'evento_id' => $request->evento_id,
+            'colunas' => $request->colunas,
+        ]);
+
+        // Redireciona para a rota GET sem parâmetros na URL
+        return redirect()->route('relatorios');
+    }
+
+    public function exportarExcel(Request $request)
+    {
+        $eventoId = $request->input('evento_id');
+        $colunas = $request->input('colunas', []);
+
+        $evento = Evento::find($eventoId);
+
+        $nomeArquivo = 'relatorio_evento_' . Str::slug($evento->nome) . '.xlsx';
+
+        $arquivo = Excel::download(new ParticipantesExport($eventoId, $colunas, $evento->sha256_token), $nomeArquivo);
+        return  $arquivo;
+    }
+
+    public function showValidacaoForm()
+    {
+        return Inertia::render('events/validar-hash', [
+            'flash' => [
+                'success' => Session::get('success'),
+            ],
+        ]);
+    }
+
+    public function validarHash(Request $request)
+    {
+        try {
+            $request->validate([
+                'hash' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]{64}$/i'],
+            ], [
+                'hash.required' => 'O hash é obrigatório.',
+                'hash.string'   => 'O hash deve ser uma string.',
+                'hash.size'     => 'O hash deve conter exatamente 64 caracteres.',
+                'hash.regex'    => 'O hash deve conter apenas caracteres válidos (0-9 e a-f).',
+            ]);
+
+            $usuario = auth()->user();
+            $evento = Evento::where('sha256_token', $request->hash)->first();
+
+            if (! $evento) {
+                throw ValidationException::withMessages([
+                    'hash' => ['Hash inválido.'],
+                ]);
+            }
+
+            // Verifica se o usuário já validou
+            $jaValidado = $evento->validadores()->where('evento_user_validacoes.user_id', $usuario->id)->exists();
+
+            if ($jaValidado) {
+                throw ValidationException::withMessages([
+                    'hash' => ['Você já validou esse evento.'],
+                ]);
+            }
+
+            $evento->validadores()->attach($usuario->id, [
+                'validado_em' => now()
+            ]);
+
+            return redirect()->route('validarHashForm')
+                ->with('success', "Hash válido! Esse código pertence ao evento $evento->nome")
+                ->with(
+                    'evento', [
+                        'id' => $evento->id,
+                        'nome' => $evento->nome,
+                    ]
+                )
+            ;
+
+        } catch (ValidationException $exception) {
+            return Inertia::render('events/validar-hash', [
+               'message' => $exception->getMessage(),
+               'errors' => $exception->errors(),
+            ]);
         }
     }
 }

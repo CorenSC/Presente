@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
                         </Link>
                     </li>
                     <li>
-                        <Link href="#" className={linkClass('/relatorios')}>
+                        <Link href={route('relatorios')} className={linkClass('/relatorios')}>
                             Relatórios
                         </Link>
                     </li>
@@ -64,7 +64,7 @@ const Navbar: React.FC = () => {
 
             {/* Menu mobile */}
             {menuAberto && (
-                <div className="animate-fade-in-down mt-4 space-y-2 text-sm text-white flex flex-col md:hidden">
+                <div className="animate-fade-in-down mt-4 flex flex-col space-y-2 text-sm text-white md:hidden">
                     <a href="/dashboard" className={linkClass('/dashboard')}>
                         Dashboard
                     </a>
