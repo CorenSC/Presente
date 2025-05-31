@@ -24,11 +24,12 @@ export default function CadastroRealizado({ participante }: ParticipanteProps) {
             <DefaultFormCadastro className="flex justify-center">
                 <div className="text-primary w-full p-4 lg:w-1/2 rounded-lg h-1/2 bg-white lg:p-8 shadow-lg dark:bg-gray-800 dark:text-white">
                     <h1 className="text-xl font-bold text-center text-green-600 dark:text-green-400">
-                        🎉 Cadastro realizado com sucesso!
+                        🎉 Inscrição realizada com sucesso!
                     </h1>
                     <p className="mt-4 text-center text-base lg:text-lg">
-                        Parabéns <span className="font-semibold">{participante.nome}</span>, seu cadastro foi confirmado para o evento abaixo:
+                        Parabéns <span className="font-semibold">{participante.nome}</span>, sua inscrição foi realizada para o evento abaixo:
                     </p>
+                    <p className='mt-4 text-center text-xs'>Enviamos um e-mail, não esqueça de olhar!</p>
 
                     <div className="mt-6 space-y-4">
                         {participante.eventos?.map((evento, index) => (

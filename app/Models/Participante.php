@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Participante extends Model
+class Participante extends Model implements AuthenticatableContract
 {
-    use HasFactory;
+    use HasFactory, Authenticatable;
 
     protected $fillable = [
         'nome',
@@ -17,13 +19,13 @@ class Participante extends Model
         'categoria_profissional',
         'numero_inscricao',
         'municipio',
-        'instituicao'
+        'instituicao',
     ];
 
     public function eventos()
     {
         return $this->belongsToMany(Evento::class)
-                     ->withPivot(['status'])
-                     ->withTimestamps();
+            ->withPivot(['status'])
+            ->withTimestamps();
     }
 }

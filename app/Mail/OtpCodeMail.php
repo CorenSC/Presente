@@ -9,16 +9,15 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ConfirmacaoPresencaMail extends Mailable
+class OtpCodeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct()
+    public $otp;
+
+    public function __construct(string $otp)
     {
-        //
+        $this->otp = $otp;
     }
 
     /**
@@ -27,7 +26,7 @@ class ConfirmacaoPresencaMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Confirmacao Presenca Mail',
+            subject: 'Código de acesso',
         );
     }
 
@@ -37,7 +36,10 @@ class ConfirmacaoPresencaMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.confirmacao-presenca',
+            markdown: 'emails.otp_code',
+            with: [
+                'otp' => $this->otp,
+            ],
         );
     }
 

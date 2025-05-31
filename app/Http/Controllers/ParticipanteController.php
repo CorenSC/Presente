@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\InscricaoRealizadaMail;
 use App\Models\Evento;
 use App\Models\Participante;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -69,6 +72,8 @@ class ParticipanteController extends Controller
                 $participante->id => ['status' => 'inscrito']
             ]);
 
+            Mail::to($participante->email)->send(new InscricaoRealizadaMail($participante, $evento));
+
             return redirect()->route('cadastroRealizado', ['id' => $participante->id]);
         } catch (ValidationException $exception) {
             return Redirect::back()
@@ -117,6 +122,27 @@ class ParticipanteController extends Controller
                 ->withErrors($exception->errors())
                 ->withInput();
         }
+
+    }
+
+    public function eventosCadastrados()
+    {
+        $participante = Auth::guard('participante')->user();
+
+        $eventos = $participante->eventos()->get()->map(function ($evento) {
+            return [
+                'id' => $evento->id,
+                'nome' => $evento->nome,
+                'local_do_evento' => $evento->local_do_evento,
+                'descricao' => $evento->descricao,
+                'status' => $evento->pivot->status,
+                'data_inicio' => $evento->data_inicio,
+            ];
+        });
+
+        return Inertia::render('participante/eventos-cadastrados', [
+            'eventos' => $eventos,
+        ]);
 
     }
 }

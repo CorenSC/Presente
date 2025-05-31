@@ -25,12 +25,36 @@
             font-size: 12px;
             color: #6b7280;
             margin-top: 30px;
+            line-height: 1.5;
+            padding: 0 10px;
+            word-break: break-word;
         }
 
         .img-center {
             display: block;
             margin: 0 auto 20px auto;
             max-width: 160px;
+        }
+
+        .otp-boxes {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .otp-box {
+            width: 40px;
+            height: 50px;
+            border: 2px solid #1a202c;
+            border-radius: 8px;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f7fafc;
+            user-select: none;
         }
     </style>
 </head>
