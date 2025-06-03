@@ -30,7 +30,7 @@ composer install
 ```
 ### 3. Instale as dependências JavaScript
 ```bash
-npm intall
+npm i
 #ou
 yarn install
 ```
@@ -63,3 +63,7 @@ Esse comando executa os seguintes serviços simultaneamente:
 - Inicia o Vite (React)
 - Escuta as filas (`queue:listen`)
 - Roda o Pail (`artisan pail`)
+
+### Após rodar todos os comandos:
+
+- Acesse o sistema (`localhost:8000`)
