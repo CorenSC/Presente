@@ -59,6 +59,7 @@ function OtpInput({ length, value, onChange }: { length: number; value: string; 
                         value={value[idx] || ''}
                         onChange={(e) => handleChange(e, idx)}
                         onKeyDown={(e) => handleKeyDown(e, idx)}
+                        // @ts-ignore
                         ref={(el) => (inputsRef.current[idx] = el)}
                         autoComplete="one-time-code"
                     />
@@ -156,6 +157,7 @@ export default function Login() {
             onSuccess: (page) => {
                 const emailFromResponse = page.props.participantEmail;
                 if (emailFromResponse) {
+                    // @ts-ignore
                     setUserEmail(emailFromResponse);
                 }
                 setStep(2);

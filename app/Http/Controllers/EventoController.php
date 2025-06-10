@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\ParticipantesExport;
 use App\Imports\ParticipantesImport;
+use App\Models\CertificadoModelo;
 use App\Models\Evento;
 use Carbon\Carbon;
 use Endroid\QrCode\QrCode;
@@ -429,6 +430,34 @@ class EventoController extends Controller
                'message' => $exception->getMessage(),
                'errors' => $exception->errors(),
             ]);
+        }
+    }
+
+    public function relacionarModelo(Evento $evento)
+    {
+        $modelos = CertificadoModelo::all();
+
+        return Inertia::render('events/relacionar-modelo', [
+            'evento' => $evento,
+            'modelos' => $modelos,
+        ]);
+    }
+
+    public function atualizarModelo(Request $request, Evento $evento)
+    {
+        try {
+            $request->validate([
+                'certificado_modelo_id' => 'required|exists:certificado_modelos,id',
+            ], [
+                'certificado_modelo_id.required' => 'O campo de seleção é obrigatório.'
+            ]);
+
+            $evento->certificado_modelo_id = $request->certificado_modelo_id;
+            $evento->save();
+
+            return redirect()->route('eventoShow', $evento->id)->with('success', 'Modelo de certificado relacionado com sucesso!');
+        } catch (ValidationException $exception) {
+            return redirect()->back()->withErrors($exception->errors());
         }
     }
 }

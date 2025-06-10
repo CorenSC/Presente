@@ -1,28 +1,21 @@
-import { FaCalendarAlt, FaClock, FaLink, FaMapMarkerAlt, FaQrcode } from 'react-icons/fa';
-import { BiSolidEdit  } from "react-icons/bi";
-import { Link, useForm } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ClipboardCopy, Download } from 'lucide-react';
-import { formatarDataBrasileira } from '@/lib/utils';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-    DialogTrigger
-} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { FaChartBar } from "react-icons/fa";
+import { formatarDataBrasileira } from '@/lib/utils';
+import { Link, useForm } from '@inertiajs/react';
+import { ClipboardCopy, Download } from 'lucide-react';
+import { FormEvent, useState } from 'react';
+import { BiSolidEdit } from 'react-icons/bi';
+import { FaCalendarAlt, FaChartBar, FaClock, FaLink, FaMapMarkerAlt, FaQrcode } from 'react-icons/fa';
 
 type Atividade = {
     nome: string;
     data: string;
     hora_inicio: string;
     hora_fim: string;
-}
+};
+
 interface Evento {
     id: number;
     nome: string;
@@ -36,7 +29,8 @@ interface Evento {
     link_liberado: boolean;
     qr_code_gerado: boolean;
     qr_code_base64: string;
-    ativo:boolean;
+    ativo: boolean;
+    certificado_modelo_id: number;
 }
 
 const formatTime = (time: string | undefined) => {
@@ -224,6 +218,20 @@ export default function EventoDetalhes({ evento, app_url }: { evento: Evento; ap
                         Baixar QrCode
                     </a>
                 )}
+                <Link
+                    href={route('detalhesEvento', evento.id)}
+                    className="flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-gray-600/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-gray-700 active:scale-95"
+                >
+                    <FaChartBar className="text-xl" />
+                    <span className="text-sm font-medium">Mais detalhes</span>
+                </Link>
+                {! evento.certificado_modelo_id && (
+                    <Link
+                        href={route('eventosRelacionarModelo', evento.id)}
+                        className="flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-blue-400/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-blue-500 active:scale-95">
+                        Modelo de certificado
+                    </Link>
+                )}
                 {evento.ativo && (
                     <button
                         onClick={editarEvento}
@@ -233,13 +241,6 @@ export default function EventoDetalhes({ evento, app_url }: { evento: Evento; ap
                         <span className="text-sm font-medium">Editar</span>
                     </button>
                 )}
-                <Link
-                    href={route('detalhesEvento', evento.id)}
-                    className="flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-gray-600/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-gray-700 active:scale-95"
-                >
-                    <FaChartBar className="text-xl" />
-                    <span className="text-sm font-medium">Mais detalhes</span>
-                </Link>
             </div>
         </div>
     );

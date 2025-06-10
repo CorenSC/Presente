@@ -28,4 +28,9 @@ class Participante extends Model implements AuthenticatableContract
             ->withPivot(['status'])
             ->withTimestamps();
     }
+
+    public function certificados()
+    {
+        return $this->hasMany(Certificado::class);
+    }
 }

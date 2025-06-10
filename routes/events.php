@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\CertificadoController;
 use App\Http\Controllers\EventoController;
+use App\Http\Controllers\ModeloCertificadoController;
+use App\Models\CertificadoModelo;
 use App\Models\Evento;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -50,7 +53,32 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::post('relatorios/evento', [EventoController::class, 'gerarRelatorio'])->name('gerarRelatorio');
 
-    Route::post('/relatorios/evento/exportar', [EventoController::class, 'exportarExcel'])->name('exportarExcel');
+    Route::post('relatorios/evento/exportar', [EventoController::class, 'exportarExcel'])->name('exportarExcel');
+
+    Route::get('modelo-certificado', [ModeloCertificadoController::class, 'modeloCertificado'])->name('modeloCertificado');
+    Route::get('modelo-certificado/lista', [ModeloCertificadoController::class, 'index'])->name('modeloCertificadoLista');
+    Route::post('modelo-certificado/salvar', [ModeloCertificadoController::class, 'modeloStore'])->name('modeloStore');
+    Route::get('modelo-certificado/editar/{id}', function ($id) {
+        return Inertia::render('modelo-certificado/editar', [
+            'modelo' => CertificadoModelo::findOrFail($id),
+        ]);
+    })->name('modeloCertificadoEditar');
+    Route::get('modelo-certificado/{id}', function ($id) {
+        $modeloCertificado = CertificadoModelo::findOrFail($id);
+        return Inertia::render('modelo-certificado/show', [
+            'modelo' => $modeloCertificado,
+            'flash' => [
+                'success' => Session::get('success'),
+            ],
+        ]);
+    })->name('modeloCertificadoShow');
+
+    Route::post('modelo-atualizar/{modelo}', [ModeloCertificadoController::class, 'update'])->name('modeloUpdate');
+    Route::get('/eventos/{evento}/relacionar-modelo', [EventoController::class, 'relacionarModelo'])->name('eventosRelacionarModelo');
+    Route::put('/eventos/{evento}/relacionar-modelo', [EventoController::class, 'atualizarModelo'])->name('eventosAtualizarModelo');
+
+    Route::post('/eventos/{evento}/liberar-certificados', [CertificadoController::class, 'liberarCertificados'])->name('eventosLiberarCertificados');
+
 
 });
 

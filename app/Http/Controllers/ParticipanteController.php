@@ -129,7 +129,12 @@ class ParticipanteController extends Controller
     {
         $participante = Auth::guard('participante')->user();
 
-        $eventos = $participante->eventos()->get()->map(function ($evento) {
+        $eventos = $participante->eventos()->get()->map(function ($evento) use ($participante) {
+            // Tenta pegar o certificado para esse evento e participante
+            $certificado = $evento->certificados()
+                ->where('participante_id', $participante->id)
+                ->first();
+
             return [
                 'id' => $evento->id,
                 'nome' => $evento->nome,
@@ -137,6 +142,11 @@ class ParticipanteController extends Controller
                 'descricao' => $evento->descricao,
                 'status' => $evento->pivot->status,
                 'data_inicio' => $evento->data_inicio,
+                'certificado' => $certificado ? [
+                    'id' => $certificado->id,
+                    'arquivo' => $certificado->arquivo,
+                    'hash' => $certificado->hash,
+                ] : null,
             ];
         });
 
