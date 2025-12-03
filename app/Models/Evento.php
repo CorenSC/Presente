@@ -69,4 +69,14 @@ class Evento extends Model
             ->withPivot(['validado_em'])
             ->withTimestamps();
     }
+
+    public function certificadoModelo()
+    {
+        return $this->belongsTo(CertificadoModelo::class, 'certificado_modelo_id');
+    }
+
+    public function certificados()
+    {
+        return $this->hasMany(Certificado::class);
+    }
 }

@@ -125,14 +125,16 @@ function ListaEvento() {
                             <Eye className="w-5" />
                         </Link>
 
-                        <Link
-                            href={route('editarEvento', evento.id)}
-                            alt="Editar"
-                            title={'Editar'}
-                            className="cursor-pointer items-center justify-center rounded bg-yellow-600/80 px-3 py-1 font-semibold text-white shadow-2xl transition-all hover:bg-yellow-700 active:scale-95"
-                        >
-                            <SquarePen className="w-5" />
-                        </Link>
+                        {evento.ativo && (
+                            <Link
+                                href={route('editarEvento', evento.id)}
+                                alt="Editar"
+                                title={'Editar'}
+                                className="cursor-pointer items-center justify-center rounded bg-yellow-600/80 px-3 py-1 font-semibold text-white shadow-2xl transition-all hover:bg-yellow-700 active:scale-95"
+                            >
+                                <SquarePen className="w-5" />
+                            </Link>
+                        )}
 
                         {evento.ativo && (
                             <>
@@ -148,35 +150,46 @@ function ListaEvento() {
                                 </Button>
                             </>
                         )}
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button title="Importar excel" className="w-11 bg-green-700 px-3 py-1 hover:bg-green-800">
-                                    <Import className="w-5" />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-lg">
-                                <DialogHeader>
-                                    <DialogTitle>Importar participantes</DialogTitle>
-                                </DialogHeader>
+                        {evento.ativo && (
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button title="Importar excel" className="w-11 bg-green-700 px-3 py-1 hover:bg-green-800">
+                                        <Import className="w-5" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-lg">
+                                    <DialogHeader>
+                                        <DialogTitle>Importar participantes</DialogTitle>
+                                    </DialogHeader>
 
-                                <div className="flex flex-col gap-4 py-4">
-                                    <Input
-                                        className="file:bg-primary hover:file:bg-primary-foreground transition-colors duration-200 file:rounded-md file:border-0 file:px-4 file:text-sm file:font-semibold file:text-white"
-                                        type="file"
-                                        accept=".xlsx, .xls"
-                                        name='arquivo'
-                                        id='arquivo'
-                                        required={true}
-                                        onChange={handleFileChange}
-                                    />
-                                    <a href='/exemplo_excel.xlsx' download className='text-sm text-blue-600 hover:underline'>Baixar o modelo de exemplo</a>
-                                </div>
+                                    <div className="flex flex-col gap-4 py-4">
+                                        <Input
+                                            className="file:bg-primary hover:file:bg-primary-foreground transition-colors duration-200 file:rounded-md file:border-0 file:px-4 file:text-sm file:font-semibold file:text-white"
+                                            type="file"
+                                            accept=".xlsx, .xls"
+                                            name='arquivo'
+                                            id='arquivo'
+                                            required={true}
+                                            onChange={handleFileChange}
+                                        />
+                                        <a href='/exemplo_excel.xlsx' download className='text-sm text-blue-600 hover:underline'>Baixar o modelo de exemplo</a>
+                                    </div>
 
-                                <DialogFooter>
-                                    <Button onClick={() => handleImportSubmit(evento.id)}>Importar</Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
+                                    <DialogFooter>
+                                        <Button onClick={() => handleImportSubmit(evento.id)}>Importar</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        )}
+
+                        {!evento.ativo && (
+                            <Button
+                                onClick={() => router.post(route('eventosLiberarCertificados', evento.id))}
+                            >
+                                Liberar certificados
+                            </Button>
+
+                        )}
                     </div>
                 );
             },

@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('eventos:inativar-expirados')->dailyAt('00:00');
         $schedule->command('ldap:sync-users')->everyTwoHours();
+        $schedule->command('certificados:limpar-temporarios')->daily();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

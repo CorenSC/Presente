@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Auth\ParticipantAuthController;
+use App\Http\Controllers\ParticipanteAuthController;
 use App\Http\Controllers\ParticipanteController;
+use App\Models\Evento;
 use App\Models\Participante;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Models\Evento;
-use Carbon\Carbon;
 
 Route::post('participante-salvar', [ParticipanteController::class, 'store'])->name('participanteStore');
 Route::get('cadastro-realizado/{id}', function ($id) {
@@ -49,7 +51,6 @@ Route::get('confirmar/presenca/{id}', function ($id) {
     return Inertia::render('participante/confirmar-presenca', ['evento' => $evento]);
 })->name('confirmarPresenca');
 
-
 Route::put('salvar/presenca/{id}', [ParticipanteController::class, 'confirmarPresenca'])->name('salvarPresenca');
 
 Route::get('confirmacao-feita/{id}', function ($id) {
@@ -72,3 +73,18 @@ Route::get('confirmacao-feita/{id}', function ($id) {
         ],
     ]);
 })->name('confirmacaoFeita');
+
+// Rotas de login do participante (guest para o guard “participante”)
+Route::middleware('guest:participante')->group(function () {
+    Route::get('participante/login', [ParticipanteAuthController::class, 'showLogin'])
+        ->name('participanteLogin');
+    Route::post('participante/login/cpf', [ParticipanteAuthController::class, 'checkCpf']);
+    Route::post('participante/login/otp', [ParticipanteAuthController::class, 'verifyOtp']);
+    Route::post('participante/login/resend-otp', [ParticipanteAuthController::class, 'resendOtp']);
+});
+
+// Rotas protegidas pelo guard “participante” (somente usuários logados como participante)
+Route::middleware('auth:participante')->group(function () {
+    Route::get('participante/eventos', [ParticipanteController::class, 'eventosCadastrados'])
+        ->name('participanteEventos');
+});
