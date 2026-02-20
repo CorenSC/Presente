@@ -21,7 +21,7 @@ jobs:
           PORT="${{ secrets.SSH_PORT }}"
           KEYFILE="$HOME/.ssh/presente_cicd"
 
-          DEPLOY_DIR="/var/www/presente"
+          DEPLOY_DIR="/home/www/presente"
           BRANCH="master"
 
           # sanity check
