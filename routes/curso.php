@@ -116,6 +116,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
                 'titulo' => $aula->titulo,
                 'descricao' => $aula->descricao,
                 'ordem' => $aula->ordem,
+                'publicada' => $aula->publicada
             ],
             'modulo' => [
                 'id' => $aula->modulo->id,
@@ -223,9 +224,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::delete('conteudos/{conteudo}', [ConteudoController::class, 'destroy'])
         ->name('conteudoDestroy');
 
-
-
-
     Route::get('curso/{evento}/player', [CursoPlayerController::class, 'show'])
         ->name('cursoPlayer');
 
@@ -241,4 +239,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::post('modulos/{modulo}/aulas/reordenar', [AulaController::class, 'reordenar'])
         ->name('aulasReordenar');
+
+    Route::post('/aulas/{aula}/conteudos/reordenar', [ConteudoController::class, 'reordenar'])
+        ->name('conteudosReordenar');
 });

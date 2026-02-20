@@ -3,7 +3,7 @@ import DefaultLayout from '@/layouts/app/default-layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Pencil } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useState } from 'react';
 
@@ -52,6 +52,9 @@ export default function EditarCurso() {
                                 Atualize as informações do curso.
                             </p>
                         </div>
+                        <Button asChild variant="secondary">
+                            <Link href={route('gerenciarCurso', { evento: curso.evento_id })}><ArrowLeft/> Voltar</Link>
+                        </Button>
                     </div>
 
                     {validationErrors && (

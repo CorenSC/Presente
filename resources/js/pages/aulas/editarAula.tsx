@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 type Aula = { id: number; modulo_id: number; titulo: string; descricao?: string | null; ordem: number, publicada: boolean };
 type Modulo = { id: number; nome: string };
@@ -59,7 +60,7 @@ export default function EditarAula() {
                         </div>
 
                         <Button asChild variant="secondary">
-                            <Link href={route('gerenciarCurso', { evento: curso.evento_id })}>Voltar</Link>
+                            <Link href={route('gerenciarCurso', { evento: curso.evento_id })}><ArrowLeft/> Voltar</Link>
                         </Button>
                     </div>
 
@@ -96,7 +97,7 @@ export default function EditarAula() {
 
                                 <input
                                     type="checkbox"
-                                    className="h-5 w-5 cursor-pointer accent-indigo-500"
+                                    className="h-5 w-5 cursor-pointer accent-primary dark:accent-blue-500"
                                     checked={data.publicada}
                                     onChange={(e) => setData('publicada', e.target.checked)}
                                 />

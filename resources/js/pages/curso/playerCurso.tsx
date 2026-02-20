@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { Head, router, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import DefaultLayout from "@/layouts/app/default-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+    ArrowLeft,
     Check,
     ChevronDown,
     ChevronLeft,
@@ -35,7 +36,7 @@ type Modulo = { id: number; nome: string; ordem: number; aulas: Aula[] };
 
 type PageProps = {
     evento: { id: number; nome?: string | null };
-    curso: { id: number; nome: string; descricao?: string | null };
+    curso: { id: number; nome: string; descricao?: string | null; evento_id?: number };
     aulaAtualId: number | null;
     concluidasIds: number[];
     modulos: Modulo[];
@@ -74,6 +75,7 @@ export default function PlayerCurso() {
         () => aulasFlat.findIndex((a) => a.id === aulaAtualId),
         [aulasFlat, aulaAtualId]
     );
+
     const aulaAtual = idxAtual >= 0 ? aulasFlat[idxAtual] : null;
 
     const prevId = idxAtual > 0 ? aulasFlat[idxAtual - 1].id : null;
@@ -108,19 +110,23 @@ export default function PlayerCurso() {
         });
     };
 
+    // ✅ sempre ordenar pelo campo ordem
     const conteudosOrdenados = useMemo(() => {
-        return (aulaAtual?.conteudos ?? []).slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+        return (aulaAtual?.conteudos ?? [])
+            .slice()
+            .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
     }, [aulaAtual]);
 
-    const grupos = useMemo(() => {
-        const all = conteudosOrdenados;
-        return {
-            videos: all.filter((c) => c.tipo === "video" && c.video_yt_id),
-            textos: all.filter((c) => c.tipo === "texto" && (c.texto ?? "").trim().length > 0),
-            links: all.filter((c) => c.tipo === "link" && (c.link_url ?? "").trim().length > 0),
-            anexos: all.filter((c) => c.tipo === "anexo" && !!c.arquivo_path),
-        };
-    }, [conteudosOrdenados]);
+    // ✅ coleções para render único (links/anexos)
+    const links = useMemo(
+        () => conteudosOrdenados.filter((c) => c.tipo === "link" && (c.link_url ?? "").trim().length > 0),
+        [conteudosOrdenados]
+    );
+
+    const anexos = useMemo(
+        () => conteudosOrdenados.filter((c) => c.tipo === "anexo" && !!c.arquivo_path),
+        [conteudosOrdenados]
+    );
 
     const defaultOpenModuleId = useMemo(() => {
         if (!aulaAtualId) return null;
@@ -135,14 +141,14 @@ export default function PlayerCurso() {
             <Head title={`${curso?.nome ?? "Curso"}`} />
             <DefaultLayout className="p-0">
                 <div className="flex w-full">
-                    {/* SIDEBAR (Rail clean quando fechado) */}
+                    {/* SIDEBAR */}
                     <aside
                         className={[
                             "relative shrink-0 border-r bg-white transition-[width] duration-200 ease-in-out dark:bg-[#0f1628] dark:border-white/10",
                             sidebarOpen ? "w-[300px]" : "w-[64px]",
                         ].join(" ")}
                     >
-                        {/* Header do sidebar */}
+                        {/* Header */}
                         <div className="flex items-center justify-between px-3 py-3">
                             {sidebarOpen ? (
                                 <div className="text-xs font-semibold tracking-wide text-muted-foreground dark:text-white/60">
@@ -163,7 +169,7 @@ export default function PlayerCurso() {
                             </button>
                         </div>
 
-                        {/* ABERTO: lista completa */}
+                        {/* ABERTO */}
                         {sidebarOpen && (
                             <div className="h-[calc(100vh-220px)] overflow-y-auto px-2 pb-4">
                                 <div className="space-y-1">
@@ -231,7 +237,7 @@ export default function PlayerCurso() {
                             </div>
                         )}
 
-                        {/* FECHADO: rail clean (sem números feios) */}
+                        {/* FECHADO */}
                         {!sidebarOpen && (
                             <div className="px-2">
                                 <div className="mt-2 rounded-xl border border-black/10 bg-black/5 p-2 text-center text-[11px] font-semibold text-primary dark:border-white/10 dark:bg-white/5 dark:text-white">
@@ -244,6 +250,12 @@ export default function PlayerCurso() {
                     {/* MAIN */}
                     <main className="min-w-0 flex-1 p-6">
                         <div className="mb-4 flex items-center justify-end gap-2">
+                            <Button asChild variant="secondary">
+                                <Link href={route("gerenciarCurso", { evento: curso.evento_id ?? evento.id })}>
+                                    <ArrowLeft /> Voltar
+                                </Link>
+                            </Button>
+
                             <Button
                                 variant="outline"
                                 className="w-auto"
@@ -252,6 +264,7 @@ export default function PlayerCurso() {
                             >
                                 <ChevronLeft size={16} /> Anterior
                             </Button>
+
                             <Button
                                 variant="outline"
                                 className="w-auto"
@@ -275,85 +288,123 @@ export default function PlayerCurso() {
                                         </div>
                                     </div>
 
+                                    {/* ✅ RESPEITA ORDEM, MAS LINKS/ANEXOS FICAM EM SEÇÃO ÚNICA */}
                                     <div className="space-y-4">
-                                        {grupos.videos.map((c) => (
-                                            <div key={c.id} className="rounded-xl border p-4 dark:border-white/10">
-                                                <YoutubeCustomPlayer
-                                                    videoId={c.video_yt_id!}
-                                                    onEnded={concluirEAvancar}
-                                                />
-                                            </div>
-                                        ))}
+                                        {(() => {
+                                            let linksRendered = false;
+                                            let anexosRendered = false;
 
-                                        {grupos.textos.map((c) => (
-                                            <div key={c.id} className="rounded-xl border p-4 dark:border-white/10">
-                                                <pre className="whitespace-pre-wrap rounded-xl bg-black/10 p-4 text-sm text-foreground dark:bg-black/20 dark:text-white">
-                                                    {c.texto ?? ""}
-                                                </pre>
-                                            </div>
-                                        ))}
+                                            return conteudosOrdenados.map((c) => {
+                                                // vídeo
+                                                if (c.tipo === "video" && c.video_yt_id) {
+                                                    return (
+                                                        <div key={c.id} className="rounded-xl border p-4 dark:border-white/10">
+                                                            <YoutubeCustomPlayer
+                                                                videoId={c.video_yt_id}
+                                                                onEnded={concluirEAvancar}
+                                                            />
+                                                        </div>
+                                                    );
+                                                }
 
-                                        {grupos.links.length > 0 && (
-                                            <div className="rounded-xl border p-4 dark:border-white/10">
-                                                <div className="mb-2 text-sm font-semibold text-primary dark:text-white">
-                                                    Links
-                                                </div>
-                                                <ul className="space-y-2">
-                                                    {grupos.links.map((c) => (
-                                                        <li key={c.id} className="rounded-lg bg-black/5 p-3 dark:bg-white/5">
-                                                            <a
-                                                                className="break-all underline text-primary dark:text-white"
-                                                                href={c.link_url ?? "#"}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                            >
-                                                                {c.link_url}
-                                                            </a>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
+                                                // texto
+                                                if (c.tipo === "texto" && (c.texto ?? "").trim().length > 0) {
+                                                    return (
+                                                        <div key={c.id} className="rounded-xl border p-4 dark:border-white/10">
+                                                            <pre className="whitespace-pre-wrap rounded-xl bg-black/10 p-4 text-sm text-foreground dark:bg-black/20 dark:text-white">
+                                                                {c.texto ?? ""}
+                                                            </pre>
+                                                        </div>
+                                                    );
+                                                }
 
-                                        {grupos.anexos.length > 0 && (
-                                            <div className="rounded-xl border p-4 dark:border-white/10">
-                                                <div className="mb-2 text-sm font-semibold text-primary dark:text-white">
-                                                    Anexos
-                                                </div>
+                                                // links (seção única no lugar do 1º link)
+                                                if (c.tipo === "link") {
+                                                    if (linksRendered) return null;
+                                                    linksRendered = true;
+                                                    if (links.length === 0) return null;
 
-                                                <ul className="space-y-2">
-                                                    {grupos.anexos.map((c) => {
-                                                        const url = c.arquivo_path ? `/storage/${c.arquivo_path}` : "#";
-                                                        return (
-                                                            <li
-                                                                key={c.id}
-                                                                className="flex items-center justify-between gap-3 rounded-lg bg-black/5 p-3 dark:bg-white/5"
-                                                            >
-                                                                <div className="min-w-0">
-                                                                    <div className="truncate text-primary dark:text-white">
-                                                                        {c.arquivo_nome ?? "Arquivo"}
-                                                                    </div>
-                                                                    <div className="text-xs text-muted-foreground dark:text-white/60">
-                                                                        {c.arquivo_mime ?? "Arquivo"}
-                                                                        {c.arquivo_size ? ` • ${formatBytes(c.arquivo_size)}` : ""}
-                                                                    </div>
-                                                                </div>
+                                                    return (
+                                                        <div key="links-section" className="rounded-xl border p-4 dark:border-white/10">
+                                                            <div className="mb-2 text-sm font-semibold text-primary dark:text-white">
+                                                                Links
+                                                            </div>
+                                                            <ul className="space-y-2">
+                                                                {links.map((lk) => (
+                                                                    <li
+                                                                        key={lk.id}
+                                                                        className="rounded-lg bg-black/5 p-3 dark:bg-white/5"
+                                                                    >
+                                                                        <a
+                                                                            className="break-all underline text-primary dark:text-white"
+                                                                            href={lk.link_url ?? "#"}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                        >
+                                                                            {lk.link_url}
+                                                                        </a>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    );
+                                                }
 
-                                                                <a
-                                                                    href={url}
-                                                                    download={c.arquivo_nome ?? "arquivo"}
-                                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-black/10 text-primary transition hover:bg-black/5 dark:border-white/10 dark:text-white dark:hover:bg-white/5"
-                                                                    title="Baixar"
-                                                                    aria-label="Baixar arquivo"
-                                                                >
-                                                                    <Download size={18} />
-                                                                </a>
-                                                            </li>
-                                                        );
-                                                    })}
-                                                </ul>
-                                            </div>
-                                        )}
+                                                // anexos (seção única no lugar do 1º anexo)
+                                                if (c.tipo === "anexo") {
+                                                    if (anexosRendered) return null;
+                                                    anexosRendered = true;
+                                                    if (anexos.length === 0) return null;
+
+                                                    return (
+                                                        <div key="anexos-section" className="rounded-xl border p-4 dark:border-white/10">
+                                                            <div className="mb-2 text-sm font-semibold text-primary dark:text-white">
+                                                                Anexos
+                                                            </div>
+
+                                                            <ul className="space-y-2">
+                                                                {anexos.map((ax) => {
+                                                                    const url = ax.arquivo_path
+                                                                        ? `/storage/${ax.arquivo_path}`
+                                                                        : "#";
+
+                                                                    return (
+                                                                        <li
+                                                                            key={ax.id}
+                                                                            className="flex items-center justify-between gap-3 rounded-lg bg-black/5 p-3 dark:bg-white/5"
+                                                                        >
+                                                                            <div className="min-w-0">
+                                                                                <div className="truncate text-primary dark:text-white">
+                                                                                    {ax.arquivo_nome ?? "Arquivo"}
+                                                                                </div>
+                                                                                <div className="text-xs text-muted-foreground dark:text-white/60">
+                                                                                    {ax.arquivo_mime ?? "Arquivo"}
+                                                                                    {ax.arquivo_size
+                                                                                        ? ` • ${formatBytes(ax.arquivo_size)}`
+                                                                                        : ""}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <a
+                                                                                href={url}
+                                                                                download={ax.arquivo_nome ?? "arquivo"}
+                                                                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-black/10 text-primary transition hover:bg-black/5 dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+                                                                                title="Baixar"
+                                                                                aria-label="Baixar arquivo"
+                                                                            >
+                                                                                <Download size={18} />
+                                                                            </a>
+                                                                        </li>
+                                                                    );
+                                                                })}
+                                                            </ul>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return null;
+                                            });
+                                        })()}
 
                                         {conteudosOrdenados.length === 0 && (
                                             <div className="text-sm text-muted-foreground dark:text-white/70">

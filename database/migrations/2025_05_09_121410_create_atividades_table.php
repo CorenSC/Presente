@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('evento_id')->constrained('eventos')->onDelete('cascade');
             $table->string('nome');
             $table->date('data');
-            $table->time('hora_inicio');
-            $table->time('hora_fim');
+            $table->time('hora_inicio')->nullable();
+            $table->time('hora_fim')->nullable();
             $table->boolean('ativo')->default(true);
             $table->timestamps();
         });

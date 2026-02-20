@@ -107,13 +107,17 @@ export default function CriarEvento() {
     };
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setShowPicker(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
+        };
     }, []);
 
     return (
@@ -163,9 +167,9 @@ export default function CriarEvento() {
                     </label>
 
                     {/* DATAS */}
-                    <div ref={containerRef} className="flex w-full gap-6">
+                    <div ref={containerRef} className="flex w-full gap-6 flex-col md:flex-row">
                         {(['data_inicio', 'data_fim'] as const).map((field) => (
-                            <div key={field} className="w-full">
+                            <div key={field} className="w-full md:w-1/2">
                                 <Input
                                     readOnly
                                     label={field === 'data_inicio' ? 'Data início: *' : 'Data fim: *'}
@@ -174,13 +178,18 @@ export default function CriarEvento() {
                                     placeholder="dd/mm/aaaa"
                                 />
                                 {showPicker === field && (
-                                    <div className="w-full shadow-lg">
+                                    <div className="w-full md:w-4/5 shadow-lg">
                                         <DayPicker
                                             mode="single"
                                             locale={ptBR}
                                             selected={parseDate(data[field])}
                                             onSelect={handleDateSelect}
-                                            className="rounded-lg border bg-white p-3 dark:bg-gray-800"
+                                            className="rounded-lg border w-full bg-white text-primary p-3 dark:bg-gray-800 dark:text-white"
+                                            classNames={{
+                                                today: "text-blue-500 font-bold",
+                                                chevron: "fill-blue-500",
+                                                selected: "border-3 border-blue-500 rounded-full w-9 h-9 flex items-center justify-center text-lg font-bold"
+                                            }}
                                         />
                                     </div>
                                 )}
@@ -193,7 +202,7 @@ export default function CriarEvento() {
                         {(['hora_inicio', 'hora_fim'] as const).map((field) => (
                             <div key={field} className="w-full">
                                 <label className="text-primary flex flex-col gap-2 dark:text-white">
-                                    {field === 'hora_inicio' ? 'Hora início: *' : 'Hora fim: *'}
+                                    {field === 'hora_inicio' ? 'Hora início:' : 'Hora fim:'}
                                     <Select value={data[field]} onValueChange={(v) => setData(field, v)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecione" />
@@ -366,6 +375,7 @@ export default function CriarEvento() {
                             />
                         </div>
                     )}
+                    <p className='text-red-400 font-bold text-sm'>Todos que tiverem <span className='font-black text-lg'>*</span> são obrigatórios</p>
 
                     <Button type="submit">Cadastrar evento</Button>
                 </Form>

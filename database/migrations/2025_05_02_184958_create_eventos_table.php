@@ -20,8 +20,8 @@ return new class extends Migration
             $table->date('data_fim');
             $table->date('cadastro_abertura')->nullable();
             $table->date('cadastro_encerramento')->nullable();
-            $table->time('hora_inicio');
-            $table->time('hora_fim');
+            $table->time('hora_inicio')->nullable();
+            $table->time('hora_fim')->nullable();
             $table->boolean('ativo')->default(true);
             $table->boolean('link_liberado')->default(false);
             $table->boolean('qr_code_gerado')->default(false);

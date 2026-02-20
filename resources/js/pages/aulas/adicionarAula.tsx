@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 type Modulo = { id: number; nome: string; curso_id: number };
 type Curso = { id: number; nome: string; evento_id: number };
@@ -55,7 +56,11 @@ export default function AdicionarAula() {
                                 Módulo: <span className="font-semibold">{modulo.nome}</span> • Curso:{' '}
                                 <span className="font-semibold">{curso.nome}</span>
                             </p>
+
                         </div>
+                        <Button asChild variant="secondary">
+                            <Link href={route('gerenciarCurso', { evento: curso.evento_id })}><ArrowLeft/> Voltar</Link>
+                        </Button>
                     </div>
 
                     <Card className="dark:bg-dark rounded-2xl p-5 lg:w-full">

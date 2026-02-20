@@ -49,27 +49,27 @@ class EventoController extends Controller
                 'local_do_evento' => 'required|string|max:100',
                 'data_inicio' => 'required|date|after_or_equal:' . now()->format('Y-m-d'),
                 'data_fim' => 'required|date|after_or_equal:data_inicio',
-                'hora_inicio' => 'required',
-                'hora_fim' => 'required|date_format:H:i|after:hora_inicio',
+                'hora_inicio' => 'nullable|required_with:hora_fim',
+                'hora_fim' => 'nullable|required_with:hora_inicio|date_format:H:i|after:hora_inicio',
                 'tipo' => 'required|in:presencial,online,hibrido',
                 'atividades.*.data' => 'required|date|after_or_equal:' . $dataInicio . '|before_or_equal:' . $dataFim,
-                'atividades.*.hora_fim' => 'required|date_format:H:i|after:atividades.*.hora_inicio',
-                'atividades.*.hora_inicio' => 'required',
+                'atividades.*.hora_fim' => 'nullable|required_with:atividades.*.hora_inicio|date_format:H:i|after:atividades.*.hora_inicio',
+                'atividades.*.hora_inicio' => 'nullable|required_with:atividades.*.hora_fim',
                 'atividades.*.nome' => 'required|string|min:5|max:100',
-                'curso.nome' => 'required|string|min:5|max:100',
-                'curso.descricao' => 'required|string|min:10|max:255',
-                'curso.carga_horaria' => 'required|numeric|min:1',
+                'curso' => 'nullable|array',
+                'curso.nome' => 'required_with:curso|string|min:5|max:100',
+                'curso.descricao' => 'required_with:curso|string|min:10|max:255',
+                'curso.carga_horaria' => 'required_with:curso|numeric|min:1',
             ], [
                 'nome.required' => 'O nome do evento é obrigatório.',
                 'nome.min' => 'O nome do evento deve conter mais de 5 caracteres.',
                 'nome.max' => 'O nome do evento não pode conter mais de 100 caracteres.',
                 'descricao.min' => 'A descrição deve conter no minimo 10 caracteres.',
+                'descricao.required' => 'A descrição do evento é obrigatório.',
                 'data_inicio.after_or_equal' => 'A data de início não pode ser anterior a hoje.',
                 'data_fim.after_or_equal' => 'A data fim não pode ser anterior a data de início.',
                 'hora_fim.after' => 'A hora fim não pode ser anterior ou igual a hora de início',
                 'atividades.*.data.required' => 'A data da atividade é obrigatória.',
-                'atividades.*.hora_fim.required' => 'A hora fim da atividade é obrigatória.',
-                'atividades.*.hora_inicio.required' => 'A hora início da atividade é obrigatória.',
                 'atividades.*.data.after_or_equal' => 'O horário de início não pode ser antes da data inicial do evento.',
                 'atividades.*.data.before_or_equal' => 'O horário de início não pode ser depois da data final do evento.',
                 'atividades.*.hora_fim.after' => 'A hora fim da ativade não pode ser anterior ou igual a hora de início.',
@@ -79,8 +79,10 @@ class EventoController extends Controller
                 'curso.nome.required' => 'O nome do curso é obrigatorio.',
                 'curso.nome.max' => 'O nome do curso não pode conter mais de 100 caracteres.',
                 'curso.nome.min' => 'O nome do curso deve conter mais de 5 caracteres.',
+                'curso.descricao.required' => 'A descrição do curso é obrigatório.',
                 'curso.descricao.min' => 'A descrição deve conter no minimo 10 caracteres.',
                 'curso.carga_horaria.min' => 'A carga horária deve ser maior que 0.',
+                'curso.carga_horaria.required' => 'A carga horária é obrigatória.',
             ]);
             $evento = Evento::create($validated);
             foreach ($request->input('atividades', []) as $atividadeData) {
@@ -133,15 +135,16 @@ class EventoController extends Controller
             ]);
 
             $validated = $request->validate([
-                'nome' => 'required|string|max:255',
-                'local_do_evento' => 'required|string|max:255',
+                'nome' => 'required|string|max:100',
+                'local_do_evento' => 'required|string|max:100',
+                'descricao' => 'required|string|max:255',
                 'data_fim' => 'required|date|after_or_equal:data_inicio',
-                'hora_inicio' => 'required',
-                'hora_fim' => 'required|date_format:H:i|after:hora_inicio',
+                'hora_inicio' => 'nullable|required_with:hora_fim',
+                'hora_fim' => 'nullable|required_with:hora_inicio|date_format:H:i|after:hora_inicio',
                 'tipo' => 'required|in:presencial,online,hibrido',
                 'atividades.*.data' => 'required|date|after_or_equal:' . $dataInicio . '|before_or_equal:' . $dataFim,
-                'atividades.*.hora_inicio' => 'required',
-                'atividades.*.hora_fim' => 'required|date_format:H:i|after:atividades.*.hora_inicio',
+                'atividades.*.hora_fim' => 'nullable|required_with:atividades.*.hora_inicio|date_format:H:i|after:atividades.*.hora_inicio',
+                'atividades.*.hora_inicio' => 'nullable|required_with:atividades.*.hora_fim',
                 'atividades.*.nome' => 'required|string|max:255',
 
                 'curso.nome' => 'required|string|min:5|max:100',
@@ -168,10 +171,6 @@ class EventoController extends Controller
 
                 'data_fim.required' => 'A data fim é obrigatória.',
                 'data_fim.after_or_equal' => 'A data fim não pode ser anterior a data de início.',
-
-                'hora_inicio.required' => 'A hora de início é obrigatória.',
-
-                'hora_fim.required' => 'A hora fim é obrigatória.',
                 'hora_fim.after' => 'A hora fim não pode ser anterior ou igual a hora de início.',
 
                 'tipo.required' => 'O tipo do evento é obrigatório.',
@@ -184,9 +183,6 @@ class EventoController extends Controller
                 'atividades.*.data.after_or_equal' => 'A data início não pode ser antes da data inicial do evento.',
                 'atividades.*.data.before_or_equal' => 'A data de início não pode ser depois da data final do evento.',
 
-                'atividades.*.hora_inicio.required' => 'A hora início da atividade é obrigatória.',
-
-                'atividades.*.hora_fim.required' => 'A hora fim da atividade é obrigatória.',
                 'atividades.*.hora_fim.after' => 'A hora fim da ativade não pode ser anterior ou igual a hora de início.',
 
                 'atividades.*.nome.required' => 'O nome da atividade é obrigatório.',

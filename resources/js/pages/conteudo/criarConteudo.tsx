@@ -1,3 +1,4 @@
+// resources/js/pages/conteudos/criar-conteudo.tsx
 import React, { useState } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import DefaultLayout from '@/layouts/app/default-layout';
@@ -5,14 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus } from 'lucide-react';
 
 type Aula = { id: number; titulo: string; ordem: number };
 type Modulo = { id: number; nome: string };
@@ -24,6 +19,8 @@ type PageProps = {
     modulo: Modulo;
     curso: Curso;
 };
+
+type LinkItem = { url: string };
 
 function formatBytes(bytes?: number | null) {
     if (!bytes || bytes <= 0) return '';
@@ -48,13 +45,13 @@ export default function CriarConteudo() {
         tipo: 'video' | 'texto' | 'anexo' | 'link';
         video_yt_id: string;
         texto: string;
-        link_url: string;
+        links: LinkItem[];
         arquivo: File | null;
     }>({
         tipo: 'video',
         video_yt_id: '',
         texto: '',
-        link_url: '',
+        links: [{ url: '' }],
         arquivo: null,
     });
 
@@ -64,12 +61,25 @@ export default function CriarConteudo() {
         e.preventDefault();
         setValidationErrors(null);
 
+        // garante limpeza consistente conforme tipo
+        const payload = {
+            ...data,
+            video_yt_id: data.tipo === 'video' ? data.video_yt_id : '',
+            texto: data.tipo === 'texto' ? data.texto : '',
+            links: data.tipo === 'link' ? data.links : [{ url: '' }],
+            arquivo: data.tipo === 'anexo' ? data.arquivo : null,
+        };
+
         post(route('conteudoStore', { aula: aula.id }), {
             preserveScroll: true,
             forceFormData: true,
+            data: payload as any,
             onError: (errs) => setValidationErrors(errs),
             onSuccess: () => {
-                reset('video_yt_id', 'texto', 'link_url', 'arquivo');
+                reset('video_yt_id', 'texto', 'links', 'arquivo');
+                setData('video_yt_id', '');
+                setData('texto', '');
+                setData('links', [{ url: '' }]);
                 setData('arquivo', null);
             },
         });
@@ -80,11 +90,13 @@ export default function CriarConteudo() {
     const showLink = data.tipo === 'link';
     const showAnexo = data.tipo === 'anexo';
 
+    const linkFieldErrors = Object.entries(errors).filter(([k]) => k.startsWith('links.'));
+    const normalizeLinks = (links: LinkItem[]) => (links.length ? links : [{ url: '' }]);
+
     return (
         <>
             <Head title="Adicionar Conteúdo" />
             <DefaultLayout>
-                {/* Flash */}
                 {(successMessage || errorMessage) && (
                     <Alert variant={errorMessage ? 'error' : 'success'}>
                         <AlertTitle>{errorMessage ? 'Erro' : 'Sucesso'}</AlertTitle>
@@ -92,7 +104,6 @@ export default function CriarConteudo() {
                     </Alert>
                 )}
 
-                {/* Erros gerais */}
                 {validationErrors && (
                     <Alert variant="error">
                         <AlertTitle>Erros</AlertTitle>
@@ -105,8 +116,8 @@ export default function CriarConteudo() {
                         </AlertDescription>
                     </Alert>
                 )}
+
                 <div className="mx-auto w-full max-w-4xl space-y-6 px-3 pb-10">
-                    {/* Header */}
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="space-y-1">
                             <h2 className="text-primary text-xl font-bold dark:text-white">Adicionar Conteúdo</h2>
@@ -123,19 +134,18 @@ export default function CriarConteudo() {
 
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                             <Button asChild className="rounded-md">
-                                <Link href={route('conteudosGerenciar', { aula: aula.id })} className="flex items-center gap-2">
+                                <Link
+                                    href={route('conteudosGerenciar', { aula: aula.id })}
+                                    className="flex items-center gap-2"
+                                >
                                     Gerenciar Conteúdos
                                 </Link>
                             </Button>
                         </div>
                     </div>
 
-
-
-
                     <Card className="dark:bg-dark rounded-2xl p-5 lg:w-full">
                         <form onSubmit={submit} className="space-y-5">
-                            {/* Tipo */}
                             <div className="space-y-2">
                                 <label className="text-primary text-sm font-semibold dark:text-white">Tipo *</label>
 
@@ -146,7 +156,7 @@ export default function CriarConteudo() {
                                         setData('tipo', tipo);
                                         setData('video_yt_id', '');
                                         setData('texto', '');
-                                        setData('link_url', '');
+                                        setData('links', [{ url: '' }]);
                                         setData('arquivo', null);
                                     }}
                                 >
@@ -164,10 +174,11 @@ export default function CriarConteudo() {
                                 {errors.tipo && <p className="text-sm text-red-500">{errors.tipo}</p>}
                             </div>
 
-                            {/* Vídeo */}
                             {showVideo && (
                                 <div className="space-y-2">
-                                    <label className="text-primary text-sm font-semibold dark:text-white">ID do vídeo do YouTube *</label>
+                                    <label className="text-primary text-sm font-semibold dark:text-white">
+                                        ID do vídeo do YouTube *
+                                    </label>
                                     <Input
                                         value={data.video_yt_id}
                                         onChange={(e) => setData('video_yt_id', e.target.value)}
@@ -180,7 +191,6 @@ export default function CriarConteudo() {
                                 </div>
                             )}
 
-                            {/* Texto */}
                             {showTexto && (
                                 <div className="space-y-2">
                                     <label className="text-primary text-sm font-semibold dark:text-white">Texto *</label>
@@ -195,20 +205,60 @@ export default function CriarConteudo() {
                                 </div>
                             )}
 
-                            {/* Link */}
                             {showLink && (
-                                <div className="space-y-2">
-                                    <label className="text-primary text-sm font-semibold dark:text-white">URL *</label>
-                                    <Input
-                                        value={data.link_url}
-                                        onChange={(e) => setData('link_url', e.target.value)}
-                                        placeholder="https://..."
-                                    />
-                                    {errors.link_url && <p className="text-sm text-red-500">{errors.link_url}</p>}
+                                <div className="space-y-2 w-full">
+                                    <label className="text-primary text-sm font-semibold dark:text-white">Links *</label>
+
+                                    <div className="space-y-3 w-full">
+                                        {data.links.map((item, idx) => (
+                                            <div key={idx} className="flex gap-2 w-full">
+                                                <Input
+                                                    value={item.url}
+                                                    onChange={(e) => {
+                                                        const next = [...data.links];
+                                                        next[idx] = { url: e.target.value };
+                                                        setData('links', next);
+                                                    }}
+                                                    placeholder="https://..."
+                                                    classNameForLabel='w-full'
+                                                />
+
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        const next = data.links.filter((_, i) => i !== idx);
+                                                        setData('links', normalizeLinks(next));
+                                                    }}
+                                                    disabled={data.links.length === 1}
+                                                >
+                                                    Remover
+                                                </Button>
+                                            </div>
+                                        ))}
+
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            onClick={() => setData('links', [...data.links, { url: '' }])}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Plus size={16} /> Adicionar outro link
+                                        </Button>
+                                    </div>
+
+                                    {/* erro geral do array */}
+                                    {errors.links && <p className="text-sm text-red-500">{String(errors.links)}</p>}
+
+                                    {/* erros por item */}
+                                    {linkFieldErrors.map(([k, v]) => (
+                                        <p key={k} className="text-sm text-red-500">
+                                            {String(v)}
+                                        </p>
+                                    ))}
                                 </div>
                             )}
 
-                            {/* Anexo */}
                             {showAnexo && (
                                 <div className="space-y-2">
                                     <label className="text-primary text-sm font-semibold dark:text-white">Arquivo *</label>
@@ -232,7 +282,7 @@ export default function CriarConteudo() {
 
                             <div className="flex justify-end gap-2">
                                 <Button type="submit" disabled={processing}>
-                                    {processing ? 'Salvando...' : 'Adicionar Conteúdo'}
+                                    {processing ? 'Salvando...' : data.tipo === 'link' ? 'Adicionar Links' : 'Adicionar Conteúdo'}
                                 </Button>
                             </div>
                         </form>

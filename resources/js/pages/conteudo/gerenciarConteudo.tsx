@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import DefaultLayout from '@/layouts/app/default-layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Pencil, Plus, Trash, ExternalLink, FileDown } from 'lucide-react';
+import { Pencil, Plus, Trash, ExternalLink, FileDown, ArrowLeft, GripVertical } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -13,12 +13,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { router } from '@inertiajs/react';
 
 type Aula = { id: number; titulo: string; ordem: number };
 type Modulo = { id: number; nome: string };
 type Curso = { id: number; nome: string; evento_id: number };
-
 
 type Conteudo = {
     id: number;
@@ -58,6 +56,17 @@ function ytUrlFromId(id?: string | null) {
     return `https://www.youtube.com/watch?v=${id}`;
 }
 
+function arrayMove<T>(arr: T[], from: number, to: number) {
+    const copy = [...arr];
+    const [item] = copy.splice(from, 1);
+    copy.splice(to, 0, item);
+    return copy;
+}
+
+function withSequentialOrder<T extends { ordem: number }>(items: T[]) {
+    return items.map((it, idx) => ({ ...it, ordem: idx + 1 }));
+}
+
 export default function GerenciarConteudos() {
     // ts-ignore
     const { flash, aula, modulo, curso, conteudos }: PageProps = usePage().props as any;
@@ -72,6 +81,38 @@ export default function GerenciarConteudos() {
 
     const { processing } = useForm({});
 
+    // ===== Drag & Drop (igual aos outros) =====
+    const [conteudosState, setConteudosState] = useState<Conteudo[]>(withSequentialOrder(sorted));
+    const [dragConteudoId, setDragConteudoId] = useState<number | null>(null);
+
+    useEffect(() => {
+        setConteudosState(withSequentialOrder(sorted));
+    }, [sorted]);
+
+    function persistConteudosOrder(next: Conteudo[]) {
+        const ids = next.map((c) => c.id);
+
+        router.post(
+            route('conteudosReordenar', { aula: aula.id }),
+            { ids },
+            { preserveScroll: true, preserveState: true },
+        );
+    }
+
+    function reorderConteudosByDrop(targetConteudoId: number) {
+        if (!dragConteudoId || dragConteudoId === targetConteudoId) return;
+
+        const from = conteudosState.findIndex((c) => c.id === dragConteudoId);
+        const to = conteudosState.findIndex((c) => c.id === targetConteudoId);
+        if (from < 0 || to < 0) return;
+
+        const moved = arrayMove(conteudosState, from, to);
+        const next = withSequentialOrder(moved);
+
+        setConteudosState(next);
+        persistConteudosOrder(next);
+    }
+
     // ===== Modal de exclusão =====
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [toDelete, setToDelete] = useState<Conteudo | null>(null);
@@ -82,7 +123,7 @@ export default function GerenciarConteudos() {
     };
 
     const closeDeleteModal = () => {
-        if (processing) return; // evita fechar enquanto processa
+        if (processing) return;
         setDeleteOpen(false);
         setToDelete(null);
     };
@@ -130,8 +171,17 @@ export default function GerenciarConteudos() {
                         </div>
 
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <Button asChild variant="secondary">
+                                <Link href={route('gerenciarCurso', { evento: curso.evento_id })}>
+                                    <ArrowLeft /> Voltar
+                                </Link>
+                            </Button>
+
                             <Button asChild className="rounded-md">
-                                <Link href={route('conteudoCriar', { aula: aula.id })} className="flex items-center gap-2">
+                                <Link
+                                    href={route('conteudoCriar', { aula: aula.id })}
+                                    className="flex items-center gap-2"
+                                >
                                     <Plus size={16} />
                                     Adicionar Conteúdo
                                 </Link>
@@ -143,17 +193,26 @@ export default function GerenciarConteudos() {
                         <div className="mb-4 flex items-center justify-between">
                             <div>
                                 <div className="text-primary text-base font-semibold dark:text-white">Conteúdos</div>
-                                <div className="text-xs text-muted-foreground dark:text-white/70">Total: {sorted.length}</div>
+                                <div className="text-xs text-muted-foreground dark:text-white/70">
+                                    Total: {conteudosState.length}
+                                </div>
                             </div>
+
+                            {conteudosState.length > 0 ? (
+                                <div className="text-xs text-muted-foreground dark:text-white/70">
+                                    Arraste os cards para reordenar.
+                                </div>
+                            ) : null}
                         </div>
 
-                        {sorted.length === 0 ? (
+                        {conteudosState.length === 0 ? (
                             <div className="text-sm text-muted-foreground dark:text-white/70">
-                                Nenhum conteúdo ainda. Clique em <span className="font-semibold">“Adicionar Conteúdo”</span>.
+                                Nenhum conteúdo ainda. Clique em{' '}
+                                <span className="font-semibold">“Adicionar Conteúdo”</span>.
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {sorted.map((c) => {
+                                {conteudosState.map((c) => {
                                     const isVideo = c.tipo === 'video';
                                     const isTexto = c.tipo === 'texto';
                                     const isLink = c.tipo === 'link';
@@ -165,10 +224,32 @@ export default function GerenciarConteudos() {
                                     return (
                                         <div
                                             key={c.id}
-                                            className="flex flex-col gap-3 rounded-xl border p-4 dark:border-white/10 sm:flex-row sm:items-start sm:justify-between"
+                                            className={`flex flex-col gap-3 rounded-xl border p-4 dark:border-white/10 sm:flex-row sm:items-start sm:justify-between ${dragConteudoId === c.id ? 'opacity-60' : ''
+                                                }`}
+                                            draggable
+                                            onDragStart={(e) => {
+                                                // evita começar drag quando clicar em botões/links
+                                                const target = e.target as HTMLElement;
+                                                if (target.closest('a,button')) {
+                                                    e.preventDefault();
+                                                    return;
+                                                }
+                                                setDragConteudoId(c.id);
+                                            }}
+                                            onDragEnd={() => setDragConteudoId(null)}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                reorderConteudosByDrop(c.id);
+                                            }}
+                                            title="Arraste para reordenar o conteúdo"
                                         >
                                             <div className="space-y-1">
                                                 <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="text-muted-foreground/80 dark:text-white/60">
+                                                        <GripVertical size={18} />
+                                                    </span>
+
                                                     <span className="bg-muted text-foreground rounded-full px-3 py-1 text-xs font-medium dark:bg-white/10 dark:text-white">
                                                         {c.ordem}
                                                     </span>
@@ -187,6 +268,7 @@ export default function GerenciarConteudos() {
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 className="ml-2 inline-flex items-center gap-1 text-xs underline"
+                                                                onClick={(e) => e.stopPropagation()}
                                                             >
                                                                 abrir <ExternalLink size={12} />
                                                             </a>
@@ -198,7 +280,10 @@ export default function GerenciarConteudos() {
                                                     <div className="text-sm text-foreground dark:text-white">
                                                         Texto:{' '}
                                                         <span className="text-muted-foreground dark:text-white/70">
-                                                            {c.texto ? `${c.texto.slice(0, 120)}${c.texto.length > 120 ? '…' : ''}` : '—'}
+                                                            {c.texto
+                                                                ? `${c.texto.slice(0, 120)}${c.texto.length > 120 ? '…' : ''
+                                                                }`
+                                                                : '—'}
                                                         </span>
                                                     </div>
                                                 )}
@@ -212,11 +297,14 @@ export default function GerenciarConteudos() {
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 className="inline-flex items-center gap-1 underline"
+                                                                onClick={(e) => e.stopPropagation()}
                                                             >
                                                                 {c.link_url} <ExternalLink size={12} />
                                                             </a>
                                                         ) : (
-                                                            <span className="text-muted-foreground dark:text-white/70">—</span>
+                                                            <span className="text-muted-foreground dark:text-white/70">
+                                                                —
+                                                            </span>
                                                         )}
                                                     </div>
                                                 )}
@@ -230,12 +318,15 @@ export default function GerenciarConteudos() {
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 className="inline-flex items-center gap-2 underline"
+                                                                onClick={(e) => e.stopPropagation()}
                                                             >
                                                                 <FileDown size={14} />
                                                                 {c.arquivo_nome ?? 'Baixar'}
                                                             </a>
                                                         ) : (
-                                                            <span className="text-muted-foreground dark:text-white/70">—</span>
+                                                            <span className="text-muted-foreground dark:text-white/70">
+                                                                —
+                                                            </span>
                                                         )}
 
                                                         {(c.arquivo_mime || c.arquivo_size) ? (
@@ -250,8 +341,12 @@ export default function GerenciarConteudos() {
                                             </div>
 
                                             <div className="flex gap-2 sm:justify-end">
-                                                <Button asChild className="rounded-md" size={"sm"}>
-                                                    <Link href={route('conteudoEditar', { conteudo: c.id })} className="flex items-center gap-2">
+                                                <Button asChild className="rounded-md" size="sm">
+                                                    <Link
+                                                        href={route('conteudoEditar', { conteudo: c.id })}
+                                                        className="flex items-center gap-2"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         <Pencil size={14} />
                                                         Editar
                                                     </Link>
@@ -262,8 +357,11 @@ export default function GerenciarConteudos() {
                                                     variant="destructive"
                                                     className="flex items-center rounded-md"
                                                     disabled={processing}
-                                                    onClick={() => openDeleteModal(c)}
-                                                    size='sm'
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openDeleteModal(c);
+                                                    }}
+                                                    size="sm"
                                                 >
                                                     <Trash size={14} className="mr-2" />
                                                     Excluir
@@ -278,7 +376,10 @@ export default function GerenciarConteudos() {
                 </div>
 
                 {/* ===== Modal Confirm Delete ===== */}
-                <Dialog open={deleteOpen} onOpenChange={(open) => (open ? setDeleteOpen(true) : closeDeleteModal())}>
+                <Dialog
+                    open={deleteOpen}
+                    onOpenChange={(open) => (open ? setDeleteOpen(true) : closeDeleteModal())}
+                >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle>Excluir conteúdo?</DialogTitle>
@@ -300,7 +401,12 @@ export default function GerenciarConteudos() {
                             <Button type="button" variant="secondary" onClick={closeDeleteModal} disabled={processing}>
                                 Cancelar
                             </Button>
-                            <Button type="button" variant="destructive" onClick={confirmDelete} disabled={processing || !toDelete}>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={confirmDelete}
+                                disabled={processing || !toDelete}
+                            >
                                 {processing ? 'Excluindo...' : 'Excluir'}
                             </Button>
                         </DialogFooter>

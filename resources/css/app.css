@@ -216,3 +216,8 @@
         @apply bg-background text-foreground;
     }
 }
+
+.rdp-chevron {
+    fill: white !important;
+    border-radius: 9999px;
+  }

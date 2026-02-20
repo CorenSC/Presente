@@ -1,3 +1,4 @@
+// resources/js/pages/conteudos/editar-conteudo.tsx
 import React, { useMemo, useState } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import DefaultLayout from '@/layouts/app/default-layout';
@@ -5,13 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, FileDown, Save } from 'lucide-react';
 
 type Aula = { id: number; titulo: string; ordem: number };
@@ -52,6 +47,14 @@ function formatBytes(bytes?: number | null) {
     return `${n.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+const normalizeUrl = (raw: string) => {
+    const v = (raw ?? '').trim();
+    if (!v) return '';
+    // Se já tem scheme, mantém. Senão adiciona https://
+    if (/^https?:\/\//i.test(v)) return v;
+    return `https://${v}`;
+};
+
 export default function EditarConteudo() {
     // ts-ignore
     const { flash, conteudo, aula, modulo, curso }: PageProps = usePage().props as any;
@@ -73,7 +76,8 @@ export default function EditarConteudo() {
         tipo: conteudo.tipo,
         video_yt_id: conteudo.video_yt_id ?? '',
         texto: conteudo.texto ?? '',
-        link_url: conteudo.link_url ?? '',
+        // ✅ deixa o usuário editar sem https://, mas se já tiver, mantém
+        link_url: conteudo.link_url ? conteudo.link_url.replace(/^https?:\/\//i, '') : '',
         arquivo: null,
     });
 
@@ -83,9 +87,19 @@ export default function EditarConteudo() {
         e.preventDefault();
         setValidationErrors(null);
 
+        // ✅ normaliza URL antes de enviar (não obriga o usuário a digitar https://)
+        const payload = {
+            ...data,
+            link_url: data.tipo === 'link' ? normalizeUrl(data.link_url) : '',
+            video_yt_id: data.tipo === 'video' ? data.video_yt_id : '',
+            texto: data.tipo === 'texto' ? data.texto : '',
+            arquivo: data.tipo === 'anexo' ? data.arquivo : null,
+        };
+
         put(route('conteudoUpdate', { conteudo: conteudo.id }), {
             preserveScroll: true,
             forceFormData: true,
+            data: payload as any,
             onError: (errs) => setValidationErrors(errs),
         });
     };
@@ -100,7 +114,6 @@ export default function EditarConteudo() {
             <Head title="Editar Conteúdo" />
             <DefaultLayout>
                 <div className="mx-auto w-full max-w-4xl space-y-6 px-3 pb-10">
-                    {/* Header */}
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="space-y-1">
                             <h2 className="text-primary text-xl font-bold dark:text-white">Editar Conteúdo</h2>
@@ -114,9 +127,7 @@ export default function EditarConteudo() {
                                 Aula {aula.ordem}: <span className="font-semibold">{aula.titulo}</span>
                             </div>
 
-                            <div className="text-xs text-muted-foreground dark:text-white/70">
-                                Conteúdo #{conteudo.ordem}
-                            </div>
+                            <div className="text-xs text-muted-foreground dark:text-white/70">Conteúdo #{conteudo.ordem}</div>
                         </div>
 
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -129,7 +140,6 @@ export default function EditarConteudo() {
                         </div>
                     </div>
 
-                    {/* Flash */}
                     {(successMessage || errorMessage) && (
                         <Alert variant={errorMessage ? 'destructive' : 'default'}>
                             <AlertTitle>{errorMessage ? 'Erro' : 'Sucesso'}</AlertTitle>
@@ -137,7 +147,6 @@ export default function EditarConteudo() {
                         </Alert>
                     )}
 
-                    {/* Erros gerais */}
                     {validationErrors && (
                         <Alert variant="destructive">
                             <AlertTitle>Erros</AlertTitle>
@@ -153,7 +162,6 @@ export default function EditarConteudo() {
 
                     <Card className="dark:bg-dark rounded-2xl p-5 lg:w-full">
                         <form onSubmit={submit} className="space-y-5">
-                            {/* Tipo */}
                             <div className="space-y-2">
                                 <label className="text-primary text-sm font-semibold dark:text-white">Tipo *</label>
                                 <Select
@@ -162,7 +170,6 @@ export default function EditarConteudo() {
                                         const tipo = v as any;
                                         setData('tipo', tipo);
 
-                                        // limpa campos ao trocar
                                         setData('video_yt_id', '');
                                         setData('texto', '');
                                         setData('link_url', '');
@@ -182,7 +189,6 @@ export default function EditarConteudo() {
                                 {errors.tipo && <p className="text-sm text-red-500">{errors.tipo}</p>}
                             </div>
 
-                            {/* Vídeo */}
                             {showVideo && (
                                 <div className="space-y-2">
                                     <label className="text-primary text-sm font-semibold dark:text-white">ID do vídeo do YouTube *</label>
@@ -195,7 +201,6 @@ export default function EditarConteudo() {
                                 </div>
                             )}
 
-                            {/* Texto */}
                             {showTexto && (
                                 <div className="space-y-2">
                                     <label className="text-primary text-sm font-semibold dark:text-white">Texto *</label>
@@ -209,37 +214,41 @@ export default function EditarConteudo() {
                                 </div>
                             )}
 
-                            {/* Link */}
                             {showLink && (
                                 <div className="space-y-2">
                                     <label className="text-primary text-sm font-semibold dark:text-white">URL *</label>
-                                    <Input
-                                        value={data.link_url}
-                                        onChange={(e) => setData('link_url', e.target.value)}
-                                        placeholder="https://..."
-                                    />
+
+                                    <div className="flex gap-2">
+                                        <div className="flex items-center rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground dark:bg-dark">
+                                            https://
+                                        </div>
+                                        <Input
+                                            value={data.link_url}
+                                            onChange={(e) => setData('link_url', e.target.value)}
+                                            placeholder="ex: google.com ou www.site.com.br/pagina"
+                                        />
+                                    </div>
+
+                                    <p className="text-xs text-muted-foreground dark:text-white/70">
+                                        Você pode digitar sem <span className="font-semibold">https://</span> — o sistema adiciona automaticamente.
+                                    </p>
+
                                     {errors.link_url && <p className="text-sm text-red-500">{errors.link_url}</p>}
                                 </div>
                             )}
 
-                            {/* Anexo */}
                             {showAnexo && (
                                 <div className="space-y-2">
                                     <label className="text-primary text-sm font-semibold dark:text-white">Arquivo</label>
 
-                                    {/* arquivo atual */}
                                     {arquivoUrl ? (
                                         <div className="rounded-lg border p-3 text-sm dark:border-white/10">
                                             <div className="text-muted-foreground dark:text-white/70">Arquivo atual:</div>
-                                            <a
-                                                href={arquivoUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="mt-1 inline-flex items-center gap-2 underline"
-                                            >
+                                            <a href={arquivoUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-2 underline">
                                                 <FileDown size={14} />
                                                 {conteudo.arquivo_nome ?? 'Baixar'}
                                             </a>
+
                                             {(conteudo.arquivo_mime || conteudo.arquivo_size) ? (
                                                 <div className="mt-1 text-xs text-muted-foreground dark:text-white/70">
                                                     {conteudo.arquivo_mime ?? ''}
@@ -247,6 +256,7 @@ export default function EditarConteudo() {
                                                     {conteudo.arquivo_size ? formatBytes(conteudo.arquivo_size) : ''}
                                                 </div>
                                             ) : null}
+
                                             <div className="mt-2 text-xs text-muted-foreground dark:text-white/70">
                                                 Se você escolher um novo arquivo, ele vai substituir o atual.
                                             </div>

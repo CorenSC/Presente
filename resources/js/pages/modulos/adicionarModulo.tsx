@@ -1,8 +1,11 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import DefaultLayout from '@/layouts/app/default-layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 type Curso = {
     id: number;
@@ -22,10 +25,14 @@ export default function AdicionarModulo() {
         tem_prova: false,
     });
 
+    const [validationErrors, setValidationErrors] = useState<any>(null);
+
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
+        setValidationErrors(null);
         post(route('moduloStore', { curso: curso.id }), {
             preserveScroll: true,
+            onError: (errs) => setValidationErrors(errs),
         });
     };
 
@@ -33,7 +40,19 @@ export default function AdicionarModulo() {
         <>
             <Head title="Adicionar Módulo" />
             <DefaultLayout>
-                <div className="flex flex-col items-center mx-auto w-full space-y-6 px-3 pb-10">
+                {validationErrors && (
+                    <Alert>
+                        <AlertTitle>Erros</AlertTitle>
+                        <AlertDescription>
+                            <ul className="list-disc pl-4">
+                                {Object.values(validationErrors).map((error: any, i) => (
+                                    <li key={i}>{error}</li>
+                                ))}
+                            </ul>
+                        </AlertDescription>
+                    </Alert>
+                )}
+                <div className="mx-auto w-full max-w-3xl space-y-6 px-3 pb-10">
                     {/* Header */}
                     <div className="flex items-start justify-between gap-3">
                         <div>
@@ -44,9 +63,12 @@ export default function AdicionarModulo() {
                                 Curso: <span className="font-semibold">{curso.nome}</span>
                             </p>
                         </div>
+                        <Button asChild variant="secondary">
+                            <Link href={route('gerenciarCurso', { evento: curso.evento_id })}><ArrowLeft/> Voltar</Link>
+                        </Button>
                     </div>
 
-                    <Card className="dark:bg-dark rounded-2xl p-5 w-1/2">
+                    <Card className="dark:bg-dark rounded-2xl p-5 lg:w-full">
                         <form onSubmit={submit} className="space-y-5">
                             {/* Nome */}
                             <div className="space-y-2">
