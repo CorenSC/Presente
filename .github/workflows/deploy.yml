@@ -2,7 +2,8 @@ name: Deploy (Laravel)
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
@@ -13,53 +14,38 @@ jobs:
       - name: Deploy via SSH (runner -> servidor)
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           HOST="${{ secrets.SSH_HOST }}"
           USER="${{ secrets.SSH_USER }}"
           PORT="${{ secrets.SSH_PORT }}"
+
           DEPLOY_DIR="/var/www/presente"
           BRANCH="master"
 
-          echo "Conectando em $USER@$HOST:$PORT e fazendo deploy em $DEPLOY_DIR..."
+          echo "Deploy em ${USER}@${HOST}:${PORT} -> ${DEPLOY_DIR}"
 
-          ssh -p "$PORT" -o StrictHostKeyChecking=no "$USER@$HOST" << EOF
-            set -e
-
-            cd "$DEPLOY_DIR" || { echo "Diretório não existe: $DEPLOY_DIR"; exit 1; }
-
-            echo "== Git update =="
-            git fetch origin
-            git reset --hard "origin/$BRANCH"
-
-            echo "== Composer =="
-            composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
-
-            echo "== Frontend build (se existir) =="
-            if [ -f package.json ]; then
-              npm ci || npm install
-              npm run build
-            else
-              echo "Sem package.json, pulando npm."
-            fi
-
-            echo "== Permissões Laravel =="
-            chown -R www-data:www-data storage bootstrap/cache
-            chmod -R 775 storage bootstrap/cache
-
-            echo "== Migrations (checagem -> migrate) =="
-            php artisan migrate:status
-            php artisan migrate --force
-
-            echo "== Optimize =="
-            php artisan optimize
-            php artisan queue:restart || true
-
-            echo "== Reload PHP-FPM 8.3 =="
-            systemctl reload php8.3-fpm || systemctl restart php8.3-fpm
-
-            echo "== Restart Nginx =="
-            systemctl restart nginx
-
-            echo "DEPLOY OK"
-EOF
+          ssh -p "${PORT}" -o StrictHostKeyChecking=no "${USER}@${HOST}" \
+            "set -e;
+             cd '${DEPLOY_DIR}' || { echo 'Diretório não existe: ${DEPLOY_DIR}'; exit 1; };
+             echo '== Git update ==';
+             git fetch origin;
+             git reset --hard origin/${BRANCH};
+             echo '== Composer ==';
+             composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader;
+             echo '== Frontend build (se existir) ==';
+             if [ -f package.json ]; then npm ci || npm install; npm run build; else echo 'Sem package.json, pulando npm.'; fi;
+             echo '== Permissões Laravel ==';
+             chown -R www-data:www-data storage bootstrap/cache;
+             chmod -R 775 storage bootstrap/cache;
+             echo '== Migrations ==';
+             php artisan migrate:status;
+             php artisan migrate --force;
+             echo '== Optimize ==';
+             php artisan optimize;
+             php artisan queue:restart || true;
+             echo '== Reload PHP-FPM ==';
+             systemctl reload php8.3-fpm || systemctl restart php8.3-fpm;
+             echo '== Restart Nginx ==';
+             systemctl restart nginx;
+             echo 'DEPLOY OK';"
