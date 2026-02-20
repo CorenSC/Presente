@@ -24,7 +24,6 @@ jobs:
           DEPLOY_DIR="/home/www/presente"
           BRANCH="master"
 
-          # sanity check
           test -f "$KEYFILE" || { echo "Chave não encontrada: $KEYFILE"; exit 1; }
 
           echo "Conectando em ${USER}@${HOST}:${PORT}..."
@@ -33,6 +32,7 @@ jobs:
              cd '${DEPLOY_DIR}' || { echo 'Diretório não existe: ${DEPLOY_DIR}'; exit 1; };
 
              echo '== Git update ==';
+             git config --global --add safe.directory '${DEPLOY_DIR}';
              git fetch origin;
              git reset --hard origin/${BRANCH};
 
@@ -50,8 +50,9 @@ jobs:
              php artisan migrate:status;
              php artisan migrate --force;
 
-             echo '== Optimize ==';
-             php artisan optimize;
+             echo '== Cache (sem route:cache) ==';
+             php artisan config:cache;
+             php artisan view:cache;
              php artisan queue:restart || true;
 
              echo '== Reload PHP-FPM ==';
