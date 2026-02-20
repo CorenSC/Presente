@@ -19,33 +19,45 @@ jobs:
           HOST="${{ secrets.SSH_HOST }}"
           USER="${{ secrets.SSH_USER }}"
           PORT="${{ secrets.SSH_PORT }}"
+          KEYFILE="$HOME/.ssh/presente_cicd"
 
           DEPLOY_DIR="/var/www/presente"
           BRANCH="master"
 
-          echo "Deploy em ${USER}@${HOST}:${PORT} -> ${DEPLOY_DIR}"
+          # sanity check
+          test -f "$KEYFILE" || { echo "Chave não encontrada: $KEYFILE"; exit 1; }
 
-          ssh -p "${PORT}" -o StrictHostKeyChecking=no "${USER}@${HOST}" \
+          echo "Conectando em ${USER}@${HOST}:${PORT}..."
+          ssh -i "$KEYFILE" -p "$PORT" -o StrictHostKeyChecking=no "${USER}@${HOST}" \
             "set -e;
              cd '${DEPLOY_DIR}' || { echo 'Diretório não existe: ${DEPLOY_DIR}'; exit 1; };
+
              echo '== Git update ==';
              git fetch origin;
              git reset --hard origin/${BRANCH};
+
              echo '== Composer ==';
              composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader;
+
              echo '== Frontend build (se existir) ==';
              if [ -f package.json ]; then npm ci || npm install; npm run build; else echo 'Sem package.json, pulando npm.'; fi;
+
              echo '== Permissões Laravel ==';
              chown -R www-data:www-data storage bootstrap/cache;
              chmod -R 775 storage bootstrap/cache;
+
              echo '== Migrations ==';
              php artisan migrate:status;
              php artisan migrate --force;
+
              echo '== Optimize ==';
              php artisan optimize;
              php artisan queue:restart || true;
+
              echo '== Reload PHP-FPM ==';
              systemctl reload php8.3-fpm || systemctl restart php8.3-fpm;
+
              echo '== Restart Nginx ==';
              systemctl restart nginx;
+
              echo 'DEPLOY OK';"
