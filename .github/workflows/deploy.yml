@@ -3,24 +3,28 @@ name: Deploy (Laravel)
 on:
   push:
     branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            set -e
+      - name: Deploy via SSH (runner -> servidor)
+        shell: bash
+        run: |
+          set -e
 
-            DEPLOY_DIR="/var/www/presente"
-            BRANCH="master"
+          HOST="${{ secrets.SSH_HOST }}"
+          USER="${{ secrets.SSH_USER }}"
+          PORT="${{ secrets.SSH_PORT }}"
+          DEPLOY_DIR="/var/www/presente"
+          BRANCH="master"
+
+          echo "Conectando em $USER@$HOST:$PORT e fazendo deploy em $DEPLOY_DIR..."
+
+          ssh -p "$PORT" -o StrictHostKeyChecking=no "$USER@$HOST" << EOF
+            set -e
 
             cd "$DEPLOY_DIR" || { echo "Diretório não existe: $DEPLOY_DIR"; exit 1; }
 
@@ -56,3 +60,6 @@ jobs:
 
             echo "== Restart Nginx =="
             systemctl restart nginx
+
+            echo "DEPLOY OK"
+EOF
