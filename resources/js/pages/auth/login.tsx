@@ -58,7 +58,7 @@ export default function Login() {
                                 required={true}
                             />
                             {errors.password && <p className="mt-1 text-sm text-red-700">{errors.password}</p>}
-                            <Button disabled={processing} type="submit">
+                            <Button disabled={processing} type="submit" variant={'default'}>
                                 Entrar
                             </Button>
 

@@ -33,4 +33,9 @@ class Participante extends Model implements AuthenticatableContract
     {
         return $this->hasMany(Certificado::class);
     }
+
+    public function inscricoes()
+    {
+        return $this->hasMany(EventoParticipante::class);
+    }
 }

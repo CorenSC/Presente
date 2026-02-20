@@ -27,3 +27,4 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 require __DIR__ . '/events.php';
 require __DIR__ . '/participantes.php';
 require __DIR__.'/auth.php';
+require __DIR__.'/curso.php';

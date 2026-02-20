@@ -25,7 +25,8 @@ class Evento extends Model
         'ativo',
         'link_liberado',
         'qr_code_gerado',
-        'qr_code_base64'
+        'qr_code_base64',
+        'tipo'
     ];
 
     /**
@@ -42,11 +43,20 @@ class Evento extends Model
         ];
     }
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'sha256_token',
+    ];
+
     public function participantes()
     {
         return $this->belongsToMany(Participante::class)
-                    ->withPivot(['status'])
-                    ->withTimestamps();
+            ->withPivot(['status'])
+            ->withTimestamps();
     }
 
     public function atividades()
@@ -78,5 +88,10 @@ class Evento extends Model
     public function certificados()
     {
         return $this->hasMany(Certificado::class);
+    }
+
+    public function curso()
+    {
+        return $this->hasOne(Curso::class);
     }
 }

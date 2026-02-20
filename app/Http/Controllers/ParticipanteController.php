@@ -130,10 +130,14 @@ class ParticipanteController extends Controller
         $participante = Auth::guard('participante')->user();
 
         $eventos = $participante->eventos()->get()->map(function ($evento) use ($participante) {
-            // Tenta pegar o certificado para esse evento e participante
+            // Certificado do participante nesse evento (se existir)
             $certificado = $evento->certificados()
                 ->where('participante_id', $participante->id)
                 ->first();
+
+            // ✅ Se o evento tem curso
+            // (ajuste se sua relação for diferente, mas pelo seu código parece ser $evento->curso())
+            $temCurso = $evento->curso()->exists();
 
             return [
                 'id' => $evento->id,
@@ -142,6 +146,8 @@ class ParticipanteController extends Controller
                 'descricao' => $evento->descricao,
                 'status' => $evento->pivot->status,
                 'data_inicio' => $evento->data_inicio,
+                'tem_curso' => $temCurso,
+
                 'certificado' => $certificado ? [
                     'id' => $certificado->id,
                     'arquivo' => $certificado->arquivo,
@@ -153,6 +159,6 @@ class ParticipanteController extends Controller
         return Inertia::render('participante/eventos-cadastrados', [
             'eventos' => $eventos,
         ]);
-
     }
+
 }

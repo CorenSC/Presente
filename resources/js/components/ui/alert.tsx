@@ -14,16 +14,18 @@ function Alert({ variant = 'error', className, ...props }: AlertProps) {
         info: 'bg-blue-100 border border-blue-300 text-blue-800 dark:bg-blue-800/10 dark:border-blue-900 dark:text-blue-500',
     };
     return (
-        <div
-            data-slot="alert"
-            role="alert"
-            className={cn(
-                'relative rounded-lg w-full lg:w-1/2 p-4 text-sm',
-                variants[variant],
-                className
-            )}
-            {...props}
-        />
+        <div className='w-full flex justify-center'>
+            <div
+                data-slot="alert"
+                role="alert"
+                className={cn(
+                    'relative rounded-lg w-full lg:w-1/2 p-4 text-sm',
+                    variants[variant],
+                    className
+                )}
+                {...props}
+            />
+        </div>
     );
 }
 

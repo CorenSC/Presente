@@ -24,6 +24,7 @@ interface Evento {
     qr_code_gerado: boolean;
     qr_code_base64: string;
     ativo: boolean;
+    tipo: string;
 }
 
 export default function EventoShow() {

@@ -10,7 +10,7 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 function Input({ className, type, id, label, classNameForLabel, ...props }: InputProps) {
     return (
         <label htmlFor={id} className={cn("flex flex-col gap-2", classNameForLabel)}>
-            {label && <span className="text-primary text-sm dark:text-white">{label}</span>}
+            {label && <span className="text-primary text-base dark:text-white">{label}</span>}
             <input
                 type={type}
                 data-slot="input"

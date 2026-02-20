@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
     // @ts-ignore
     return (
         <nav className="bg-primary sticky top-0 z-50 px-6 py-4 text-white shadow-md dark:bg-[#1B2C40]">
-            <div className="mx-auto flex max-w-7xl items-center justify-between">
+            <div className="flex w-full items-center justify-between gap-6">
                 {/* Logo */}
                 <div className="flex items-center space-x-2">
                     <Link href={route('dashboard')}>

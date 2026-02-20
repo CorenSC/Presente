@@ -328,7 +328,8 @@ function ListaEvento() {
                         <Button
                             onClick={() => table.previousPage()}
                             disabled={!table.getCanPreviousPage()}
-                            className="w-12 pr-10 disabled:cursor-not-allowed disabled:bg-gray-300"
+                            size={"sm"}
+                            className="pr-10 disabled:cursor-not-allowed disabled:bg-gray-300"
                         >
                             <StepBack />
                         </Button>
@@ -338,7 +339,8 @@ function ListaEvento() {
                         <Button
                             onClick={() => table.nextPage()}
                             disabled={!table.getCanNextPage()}
-                            className="w-12 pr-10 disabled:cursor-not-allowed disabled:bg-gray-300"
+                            size={"sm"}
+                            className="pr-10 disabled:cursor-not-allowed disabled:bg-gray-300"
                         >
                             <StepForward />
                         </Button>

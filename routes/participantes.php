@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\Auth\ParticipantAuthController;
+use App\Http\Controllers\CursoOverviewController;
+use App\Http\Controllers\CursoPlayerOficialController;
 use App\Http\Controllers\ParticipanteAuthController;
 use App\Http\Controllers\ParticipanteController;
 use App\Models\Evento;
@@ -87,4 +88,18 @@ Route::middleware('guest:participante')->group(function () {
 Route::middleware('auth:participante')->group(function () {
     Route::get('participante/eventos', [ParticipanteController::class, 'eventosCadastrados'])
         ->name('participanteEventos');
+
+    Route::get('participante/eventos/{evento}/curso', [CursoOverviewController::class, 'show'])
+    ->name('participanteCursoOverview');
+
+    // Player oficial (com aula via query ?aula=)
+    Route::get('participante/eventos/{evento}/curso/player', [CursoPlayerOficialController::class, 'show'])
+        ->name('participanteCursoPlayer');
+
+    // Concluir / desconcluir (só no player oficial)
+    Route::post('participante/aulas/{aula}/concluir', [CursoPlayerOficialController::class, 'concluir'])
+        ->name('participanteAulaConcluir');
+
+    Route::delete('participante/aulas/{aula}/concluir', [CursoPlayerOficialController::class, 'desconcluir'])
+        ->name('participanteAulaDesconcluir');
 });

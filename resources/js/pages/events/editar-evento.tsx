@@ -8,10 +8,18 @@ import { DayPicker } from 'react-day-picker';
 import { ptBR } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectTrigger,
+    SelectContent,
+    SelectItem,
+    SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { formatarDataBrasileira, getTimeOptions } from '@/lib/utils';
 import { Trash } from 'lucide-react';
+
+type TipoEvento = 'presencial' | 'online' | 'hibrido';
 
 type Atividade = {
     nome: string;
@@ -19,43 +27,61 @@ type Atividade = {
     hora_inicio: string;
     hora_fim: string;
 };
-interface Evento {
-    id: number;
+
+type Curso = {
     nome: string;
     descricao: string;
-    local_do_evento: string;
-    data_inicio: string;
-    data_fim: string;
-    hora_inicio: string;
-    hora_fim: string;
-    atividades: Atividade[];
+    carga_horaria: string;
+};
+
+interface Props {
+    evento: {
+        id: number;
+        nome: string;
+        tipo: TipoEvento;
+        descricao: string;
+        local_do_evento: string;
+        data_inicio: string;
+        data_fim: string;
+        hora_inicio: string;
+        hora_fim: string;
+        atividades: Atividade[];
+        curso?: Curso | null;
+    };
 }
 
-interface EditarEventoProps {
-    evento: Evento;
-}
-
-
-export default function EditarEvento({evento}: EditarEventoProps) {
+export default function EditarEvento({ evento }: Props) {
     const { data, setData, put } = useForm({
-        nome: evento.nome || '',
-        descricao: evento.descricao || '',
-        data_inicio: evento.data_inicio || '',
-        data_fim: evento.data_fim || '',
-        local_do_evento: evento.local_do_evento || '',
-        hora_inicio: evento.hora_inicio?.slice(0, 5) || '',
-        hora_fim: evento.hora_fim?.slice(0, 5) || '',
-        atividades: evento.atividades || [] // Adicione esta linha
+        nome: evento.nome,
+        tipo: evento.tipo,
+        descricao: evento.descricao,
+        local_do_evento: evento.local_do_evento,
+        data_inicio: evento.data_inicio,
+        data_fim: evento.data_fim,
+        hora_inicio: evento.hora_inicio?.slice(0, 5),
+        hora_fim: evento.hora_fim?.slice(0, 5),
+        atividades: evento.atividades ?? [],
+        curso: evento.curso ?? null,
     });
 
-    const [showPicker, setShowPicker] = useState<'data_inicio' | 'data_fim' | null>(null);
+    const hasCurso = data.tipo === 'online' || data.tipo === 'hibrido';
+    const hasAtividades = data.tipo === 'presencial' || data.tipo === 'hibrido';
+
+    const [showPicker, setShowPicker] =
+        useState<'data_inicio' | 'data_fim' | null>(null);
+
     const containerRef = useRef<HTMLDivElement>(null);
-    const [validationErrors, setValidationErrors] = useState(null);
+    const [validationErrors, setValidationErrors] = useState<any>(null);
 
     const adicionarAtividade = () => {
         setData('atividades', [
             ...data.atividades,
-            { nome: '', data: '', hora_inicio: '', hora_fim: '' }
+            {
+                nome: '',
+                data: '',
+                hora_inicio: '',
+                hora_fim: '',
+            },
         ]);
     };
 
@@ -71,16 +97,30 @@ export default function EditarEvento({evento}: EditarEventoProps) {
         setData('atividades', novasAtividades);
     };
 
+    useEffect(() => {
+        if (!hasCurso) {
+            setData('curso', null);
+        }
+
+        if (hasCurso && data.curso === null) {
+            setData('curso', {
+                nome: '',
+                descricao: '',
+                carga_horaria: '',
+            });
+        }
+
+        if (!hasAtividades) {
+            setData('atividades', []);
+        }
+    }, [data.tipo]);
+
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        // @ts-ignore
         put(route('eventoUpdate', evento), {
-            onError: (errors) => {
-                // @ts-ignore
-                setValidationErrors(errors);
-            },
+            onError: (errors) => setValidationErrors(errors),
         });
-
     };
 
     const handleDateSelect = (date: Date | undefined) => {
@@ -106,49 +146,63 @@ export default function EditarEvento({evento}: EditarEventoProps) {
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target as Node)
+            ) {
                 setShowPicker(null);
             }
         };
         const formattedEvent = {
             ...evento,
+            nome: evento.nome,
+            descricao: evento.descricao,
+            local_do_evento: evento.local_do_evento,
             data_inicio: formatarDataBrasileira(evento.data_inicio),
             data_fim: formatarDataBrasileira(evento.data_fim),
-            hora_inicio: evento.hora_inicio?.slice(0, 5), // Formata HH:MM:SS para HH:MM
-            hora_fim: evento.hora_fim?.slice(0, 5),
+            hora_inicio: evento.hora_inicio?.slice(0, 5) ?? '',
+            hora_fim: evento.hora_fim?.slice(0, 5) ?? '',
+            curso: evento.curso
+                ? {
+                    nome: evento.curso.nome,
+                    descricao: evento.curso.descricao,
+                    carga_horaria: evento.curso.carga_horaria,
+                }
+                : null,
         };
         if (evento.atividades && evento.atividades.length > 0) {
-            formattedEvent.atividades = evento.atividades.map(atividade => ({
+            formattedEvent.atividades = evento.atividades.map((atividade) => ({
                 ...atividade,
-                hora_inicio: atividade.hora_inicio.slice(0,5),
-                hora_fim: atividade.hora_fim,
+                hora_inicio: atividade.hora_inicio.slice(0, 5),
+                hora_fim: atividade.hora_fim.slice(0, 5),
             }));
         }
+
         setData(formattedEvent);
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // @ts-ignore
     return (
         <>
-            <Head title={'Editar evento'} />
-            <DefaultLayout className="flex flex-col items-center justify-center gap-6">
-                <h1 className="text-primary text-lg dark:text-white">Editar evento ID: {evento.id}</h1>
+            <Head title="Editar evento" />
+            <DefaultLayout className="flex flex-col items-center gap-6">
+                <h1 className="text-primary text-lg dark:text-white">Editar evento</h1>
+
                 {validationErrors && (
                     <Alert>
-                        <AlertTitle>Erros de Validação</AlertTitle>
+                        <AlertTitle>Erros</AlertTitle>
                         <AlertDescription>
                             <ul className="list-disc pl-4">
-                                {Object.values(validationErrors).map((error, index) => (
-                                    // @ts-ignore
-                                    <li key={index}>{error}</li>
+                                {Object.values(validationErrors).map((error: any, i) => (
+                                    <li key={i}>{error}</li>
                                 ))}
                             </ul>
                         </AlertDescription>
                     </Alert>
                 )}
+
                 <Form onSubmit={handleSubmit}>
                     <Input
                         type="text"
@@ -181,8 +235,7 @@ export default function EditarEvento({evento}: EditarEventoProps) {
                         ></textarea>
                     </label>
 
-                    <div className="flex w-full flex-col justify-center gap-6 lg:flex-row lg:justify-between"
-                         ref={containerRef}>
+                    <div className="flex w-full flex-col justify-center gap-6 lg:flex-row lg:justify-between" ref={containerRef}>
                         {(['data_inicio', 'data_fim'] as const).map((field) => (
                             <div key={field} className="w-full">
                                 <Input
@@ -215,129 +268,178 @@ export default function EditarEvento({evento}: EditarEventoProps) {
                             </div>
                         ))}
                     </div>
-                    <div className="flex w-full flex-col justify-center gap-6 lg:flex-row lg:justify-between">
-                        <div className="w-full">
-                            <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
-                                Hora início: *
-                                <Select value={data.hora_inicio}
-                                        onValueChange={(value) => setData('hora_inicio', value)}>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {getTimeOptions().map((hora) => (
-                                            <SelectItem key={hora} value={hora}>
-                                                {hora}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </label>
-                        </div>
 
-                        <div className="w-full">
-                            <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
-                                Hora fim: *
-                                <Select value={data.hora_fim} onValueChange={(value) => setData('hora_fim', value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="--Selecione--" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {getTimeOptions().map((hora) => (
-                                            <SelectItem key={hora} value={hora}>
-                                                {hora}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="relative rounded-md border p-4">
-                        <h2 className="text-primary dark:text-white">Atividade(s)</h2>
-                        {data.atividades.map((atividade, index) => (
-                            <div key={index} className="relative p-4">
-                                <div className="grid gap-4">
-                                    <Input
-                                        type="text"
-                                        label="Nome da atividade:"
-                                        placeholder="Nome da atividade"
-                                        value={atividade.nome}
-                                        onChange={(e) => atualizarAtividade(index, 'nome', e.target.value)}
-                                    />
-                                    <Input
-                                        type="date"
-                                        label="Data:"
-                                        value={atividade.data}
-                                        onChange={(e) => atualizarAtividade(index, 'data', e.target.value)}
-                                    />
-                                    <div
-                                        className="flex w-full flex-col justify-center gap-6 lg:flex-row lg:justify-between">
-                                        <div className="w-full">
-                                            <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
-                                                Hora início:
-                                                <Select
-                                                    value={atividade.hora_inicio.slice(0,5)}
-                                                    onValueChange={(value) => atualizarAtividade(index, 'hora_inicio', value)}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="--Selecione--" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {getTimeOptions().map((hora) => (
-                                                            <SelectItem key={hora} value={hora}>
-                                                                {hora}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </label>
-                                        </div>
-                                        <div className="w-full">
-                                            <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
-                                                Hora fim:
-                                                <Select
-                                                    value={atividade.hora_fim.slice(0,5)}
-                                                    onValueChange={(value) => atualizarAtividade(index, 'hora_fim', value)}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="--Selecione--" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {getTimeOptions().map((hora) => (
-                                                            <SelectItem key={hora} value={hora}>
-                                                                {hora}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <Button
-                                    type="button"
-                                    onClick={() => removerAtividade(index)}
-                                    title="Remover"
-                                    className="absolute top-2 right-2 flex h-8 w-12 items-center justify-center bg-red-800 text-center text-sm text-white hover:bg-red-900"
-                                >
-                                    <Trash className="w-5" />
-                                </Button>
+                    {/* Horários */}
+                    <div className="flex gap-6">
+                        {(['hora_inicio', 'hora_fim'] as const).map((field) => (
+                            <div key={field} className="w-full">
+                                <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
+                                    {field === 'hora_inicio' ? 'Hora início: *' : 'Hora fim: *'}
+                                    <Select value={data[field]} onValueChange={(v) => setData(field, v)}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {getTimeOptions().map((h) => (
+                                                <SelectItem key={h} value={h}>
+                                                    {h}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </label>
                             </div>
                         ))}
-                        <div className="flex justify-end mt-4">
-                            <Button
-                                type="button"
-                                onClick={adicionarAtividade}
-                                className="w-1/4"
-                            >
-                                + Adicionar Atividade
-                            </Button>
-                        </div>
                     </div>
 
-                    <Button type="submit">Cadastrar</Button>
+                    {/* TIPO (embaixo, antes do curso) */}
+                    <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
+                        Tipo de evento: *
+                        <Select value={data.tipo} onValueChange={(v) => setData('tipo', v as TipoEvento)}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="presencial">Presencial</SelectItem>
+                                <SelectItem value="online">Online</SelectItem>
+                                <SelectItem value="hibrido">Híbrido</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </label>
+
+                    {/* ATIVIDADES */}
+                    {hasAtividades && (
+                        <div className="relative rounded-md border p-4">
+                            <h2 className="text-primary dark:text-white">Atividade(s)</h2>
+
+                            {data.atividades.map((atividade, index) => (
+                                <div key={index} className="relative p-4">
+                                    <div className="grid gap-4">
+                                        <Input
+                                            type="text"
+                                            label="Nome da atividade:"
+                                            placeholder="Nome da atividade"
+                                            value={atividade.nome}
+                                            onChange={(e) => atualizarAtividade(index, 'nome', e.target.value)}
+                                        />
+
+                                        <Input
+                                            type="date"
+                                            label="Data:"
+                                            value={atividade.data}
+                                            onChange={(e) => atualizarAtividade(index, 'data', e.target.value)}
+                                        />
+
+                                        <div className="flex w-full flex-col justify-center gap-6 lg:flex-row lg:justify-between">
+                                            <div className="w-full">
+                                                <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
+                                                    Hora início:
+                                                    <Select
+                                                        value={atividade.hora_inicio.slice(0, 5) || ''}
+                                                        onValueChange={(value) => atualizarAtividade(index, 'hora_inicio', value)}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="--Selecione--" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {getTimeOptions().map((hora) => (
+                                                                <SelectItem key={hora} value={hora}>
+                                                                    {hora}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </label>
+                                            </div>
+
+                                            <div className="w-full">
+                                                <label className="text-primary flex flex-col gap-2 text-sm dark:text-white">
+                                                    Hora fim:
+                                                    <Select
+                                                        value={atividade.hora_fim.slice(0, 5) || ''}
+                                                        onValueChange={(value) => atualizarAtividade(index, 'hora_fim', value)}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="--Selecione--" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {getTimeOptions().map((hora) => (
+                                                                <SelectItem key={hora} value={hora}>
+                                                                    {hora}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        onClick={() => removerAtividade(index)}
+                                        title="Remover"
+                                        className="absolute top-2 right-2 flex h-8 w-12 items-center justify-center bg-red-800 text-white hover:bg-red-900"
+                                    >
+                                        <Trash />
+                                    </Button>
+                                </div>
+                            ))}
+
+                            <div className="mt-4 flex justify-end">
+                                <Button type="button" onClick={adicionarAtividade} className="w-1/4">
+                                    + Adicionar Atividade
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* CURSO */}
+                    {hasCurso && (
+                        <div className="grid gap-4 rounded-md border p-4">
+                            <h2 className="text-primary dark:text-white">Curso</h2>
+
+                            <Input
+                                label="Nome: "
+                                value={data.curso?.nome}
+                                onChange={(e) =>
+                                    setData('curso', {
+                                        ...data.curso!,
+                                        nome: e.target.value,
+                                    })
+                                }
+                            />
+
+                            <label htmlFor="descricao" className={'text-primary flex flex-col gap-2 dark:text-white'}>
+                                Descrição do Curso:
+                                <textarea
+                                    className="rounded-md border p-2"
+                                    rows={3}
+                                    value={data.curso?.descricao ?? ''}
+                                    onChange={(e) =>
+                                        setData('curso', {
+                                            ...data.curso!,
+                                            descricao: e.target.value,
+                                        })
+                                    }
+                                />
+                            </label>
+
+                            <Input
+                                type="number"
+                                label="Carga horária:"
+                                value={data.curso?.carga_horaria ?? ''}
+                                onChange={(e) =>
+                                    setData('curso', {
+                                        ...data.curso!,
+                                        carga_horaria: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                    )}
+
+                    <Button type="submit">Atualizar evento</Button>
                 </Form>
             </DefaultLayout>
         </>

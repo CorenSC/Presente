@@ -8,6 +8,8 @@ import { ClipboardCopy, Download } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { BiSolidEdit } from 'react-icons/bi';
 import { FaCalendarAlt, FaChartBar, FaClock, FaLink, FaMapMarkerAlt, FaQrcode } from 'react-icons/fa';
+import { GrCertificate } from "react-icons/gr";
+import { GiBookPile } from 'react-icons/gi';
 
 type Atividade = {
     nome: string;
@@ -31,6 +33,7 @@ interface Evento {
     qr_code_base64: string;
     ativo: boolean;
     certificado_modelo_id: number;
+    tipo: string;
 }
 
 const formatTime = (time: string | undefined) => {
@@ -156,14 +159,17 @@ export default function EventoDetalhes({ evento, app_url }: { evento: Evento; ap
                 </div>
             )}
 
-            <div className="flex flex-col justify-center gap-6 pt-4 lg:flex-row">
+            <div className="flex-col grid grid-cols-3 justify-center gap-6 pt-4 lg:flex-row">
                 {!evento.link_liberado && (
                     <Dialog open={openModal} onOpenChange={setOpenModal}>
                         <DialogTrigger asChild>
-                            <button className="bg-primary hover:bg-primary-foreground flex cursor-pointer items-center justify-around gap-3 rounded-xl px-6 py-3 text-white shadow-lg transition-all duration-200 active:scale-95">
-                                <FaLink className="text-lg" />
-                                <span className="text-sm font-medium">Gerar link de cadastro</span>
+                            <button className="cursor-pointer relative flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-primary-foreground active:scale-95">
+                                <FaLink className="absolute left-6 text-lg" />
+                                <span className="text-sm font-medium text-center w-full">
+                                    Gerar link de cadastro
+                                </span>
                             </button>
+
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-md">
                             <DialogHeader>
@@ -200,46 +206,71 @@ export default function EventoDetalhes({ evento, app_url }: { evento: Evento; ap
                 {!evento.qr_code_gerado && evento.link_liberado && (
                     <button
                         onClick={gerarQrCode}
-                        className="flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-[#295180] px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-[#1d416a] active:scale-95"
+                        className="relative flex items-center justify-center rounded-xl bg-[#295180] px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-[#1d416a] active:scale-95"
                     >
-                        <FaQrcode className="text-lg" />
-                        <span className="text-sm font-medium">Gerar QrCode</span>
+                        <FaQrcode className="absolute left-6 text-lg" />
+                        <span className="text-sm font-medium text-center w-full">
+                            Gerar QrCode
+                        </span>
                     </button>
+
+
                 )}
                 {evento.qr_code_gerado && (
                     <a
                         href={`data:image/png;base64,${evento.qr_code_base64}`}
                         download={`evento_${evento.nome}_qrCode.png`}
-                        className={
-                            'flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-green-600/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-green-700 active:scale-95'
-                        }
+                        className="relative flex items-center justify-center rounded-xl bg-green-600/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-green-700 active:scale-95"
                     >
-                        <Download />
-                        Baixar QrCode
+                        <Download className="absolute left-6 text-lg" />
+                        <span className="text-sm font-medium text-center w-full">
+                            Baixar QrCode
+                        </span>
                     </a>
                 )}
                 <Link
                     href={route('detalhesEvento', evento.id)}
-                    className="flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-gray-600/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-gray-700 active:scale-95"
+                    className="relative flex items-center justify-center rounded-xl bg-gray-600/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-gray-700 active:scale-95"
                 >
-                    <FaChartBar className="text-xl" />
-                    <span className="text-sm font-medium">Mais detalhes</span>
+                    <FaChartBar className="absolute left-6 text-xl" />
+                    <span className="text-sm font-medium text-center w-full">
+                        Mais detalhes
+                    </span>
                 </Link>
+
                 {! evento.certificado_modelo_id && (
                     <Link
                         href={route('eventosRelacionarModelo', evento.id)}
-                        className="flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-blue-400/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-blue-500 active:scale-95">
-                        Modelo de certificado
+                        className="relative flex items-center justify-center rounded-xl bg-blue-400/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-blue-400 active:scale-95"
+                    >
+                        <GrCertificate className="absolute left-6 text-xl" />
+                        <span className="text-sm font-medium text-center w-full">
+                            Modelo de certificado
+                        </span>
                     </Link>
                 )}
                 {evento.ativo && (
                     <button
                         onClick={editarEvento}
-                        className="flex cursor-pointer items-center justify-around gap-3 rounded-xl bg-yellow-600/80 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-yellow-700 active:scale-95"
+                        className="relative flex items-center justify-center rounded-xl bg-yellow-600/80 px-6 py-3 cursor-pointer text-white shadow-lg transition-all duration-200 hover:bg-yellow-600 active:scale-95"
                     >
-                        <BiSolidEdit className="text-xl" />
-                        <span className="text-sm font-medium">Editar</span>
+                        <BiSolidEdit className="absolute left-6 text-xl" />
+                        <span className="text-sm font-medium text-center w-full">
+                            Editar
+                        </span>
                     </button>
+                )}
+                {evento.tipo != "Presencial" && (
+                    <Link
+                        href={route('gerenciarCurso', evento)}
+                        className="relative flex items-center justify-center rounded-xl bg-indigo-400 px-6 py-3 text-white shadow-lg transition-all duration-200 hover:bg-indigo-400/70 active:scale-95"
+                    >
+                        <GiBookPile className="absolute left-6 text-xl" />
+                        <span className="text-sm font-medium text-center w-full">
+                            Gerenciar curso
+                        </span>
+                    </Link>
+
                 )}
             </div>
         </div>

@@ -1,14 +1,18 @@
 <?php
 
 use App\Http\Controllers\CertificadoController;
+use App\Http\Controllers\CursoController;
 use App\Http\Controllers\EventoController;
 use App\Http\Controllers\ModeloCertificadoController;
+use App\Http\Controllers\ModuloController;
 use App\Models\CertificadoModelo;
 use App\Models\Evento;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 use \App\Http\Controllers\UsuarioController;
+use App\Models\Curso;
+use App\Models\Modulo;
 
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
@@ -24,7 +28,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('editar-evento/{id}', function ($id) {
         return Inertia::render('events/editar-evento', [
-            'evento' => Evento::with('atividades')->findOrFail($id)
+            'evento' => Evento::with(['atividades', 'curso'])->findOrFail($id)
         ]);
     })->name('editarEvento');
 
@@ -34,7 +38,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('evento/{id}', function ($id) {
         return Inertia::render('events/evento-show', [
-            'evento' => Evento::with('atividades')->findOrFail($id),
+            'evento' => Evento::with(['atividades', 'curso'])->findOrFail($id),
             'flash' => [
                 'success' => Session::get('success'),
             ],
@@ -63,6 +67,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
             'modelo' => CertificadoModelo::findOrFail($id),
         ]);
     })->name('modeloCertificadoEditar');
+
     Route::get('modelo-certificado/{id}', function ($id) {
         $modeloCertificado = CertificadoModelo::findOrFail($id);
         return Inertia::render('modelo-certificado/show', [

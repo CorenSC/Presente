@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\ParticipantesExport;
 use App\Imports\ParticipantesImport;
 use App\Models\CertificadoModelo;
+use App\Models\Curso;
 use App\Models\Evento;
 use Carbon\Carbon;
 use Endroid\QrCode\QrCode;
@@ -43,18 +44,25 @@ class EventoController extends Controller
             $request->merge(['data_inicio' => $dataInicio, 'data_fim' => $dataFim]);
 
             $validated = $request->validate([
-                'nome' => 'required|string|max:255',
-                'descricao' => 'required|string|min:10',
-                'local_do_evento' => 'required|string|max:255',
+                'nome' => 'required|string|min:5|max:100',
+                'descricao' => 'required|string|min:10|max:255',
+                'local_do_evento' => 'required|string|max:100',
                 'data_inicio' => 'required|date|after_or_equal:' . now()->format('Y-m-d'),
                 'data_fim' => 'required|date|after_or_equal:data_inicio',
                 'hora_inicio' => 'required',
                 'hora_fim' => 'required|date_format:H:i|after:hora_inicio',
+                'tipo' => 'required|in:presencial,online,hibrido',
                 'atividades.*.data' => 'required|date|after_or_equal:' . $dataInicio . '|before_or_equal:' . $dataFim,
                 'atividades.*.hora_fim' => 'required|date_format:H:i|after:atividades.*.hora_inicio',
                 'atividades.*.hora_inicio' => 'required',
-                'atividades.*.nome' => 'required|string|max:255',
+                'atividades.*.nome' => 'required|string|min:5|max:100',
+                'curso.nome' => 'required|string|min:5|max:100',
+                'curso.descricao' => 'required|string|min:10|max:255',
+                'curso.carga_horaria' => 'required|numeric|min:1',
             ], [
+                'nome.required' => 'O nome do evento é obrigatório.',
+                'nome.min' => 'O nome do evento deve conter mais de 5 caracteres.',
+                'nome.max' => 'O nome do evento não pode conter mais de 100 caracteres.',
                 'descricao.min' => 'A descrição deve conter no minimo 10 caracteres.',
                 'data_inicio.after_or_equal' => 'A data de início não pode ser anterior a hoje.',
                 'data_fim.after_or_equal' => 'A data fim não pode ser anterior a data de início.',
@@ -66,16 +74,28 @@ class EventoController extends Controller
                 'atividades.*.data.before_or_equal' => 'O horário de início não pode ser depois da data final do evento.',
                 'atividades.*.hora_fim.after' => 'A hora fim da ativade não pode ser anterior ou igual a hora de início.',
                 'atividades.*.nome.required' => 'O nome da atividade é obrigatório.',
-                'atividades.*.nome.max' => 'O nome da atividade não pode conter mais de 255 caracteres.'
+                'atividades.*.nome.max' => 'O nome da atividade não pode conter mais de 100 caracteres.',
+                'atividades.*.nome.min' => 'O nome da atividade deve conter mais de 5 caracteres.',
+                'curso.nome.required' => 'O nome do curso é obrigatorio.',
+                'curso.nome.max' => 'O nome do curso não pode conter mais de 100 caracteres.',
+                'curso.nome.min' => 'O nome do curso deve conter mais de 5 caracteres.',
+                'curso.descricao.min' => 'A descrição deve conter no minimo 10 caracteres.',
+                'curso.carga_horaria.min' => 'A carga horária deve ser maior que 0.',
             ]);
             $evento = Evento::create($validated);
             foreach ($request->input('atividades', []) as $atividadeData) {
                 $evento->atividades()->create($atividadeData);
             }
+            $cursoData = $request->input('curso');
+
+            if ($cursoData) {
+                $evento->curso()->create($cursoData);
+            }
+
             return redirect()
                 ->route('eventoShow', ['id' => $evento->id])
                 ->with('success', 'Evento cadastrado com sucesso.')
-            ;
+                ;
 
         } catch (ValidationException $exception) {
             return Inertia::render('events/criar-evento', [
@@ -91,10 +111,26 @@ class EventoController extends Controller
     public function update(Request $request, Evento $evento)
     {
         try {
-
             $dataInicio = Carbon::createFromFormat('d/m/Y', $request->input('data_inicio'))->format('Y-m-d');
             $dataFim = Carbon::createFromFormat('d/m/Y', $request->input('data_fim'))->format('Y-m-d');
-            $request->merge(['data_inicio' => $dataInicio, 'data_fim' => $dataFim]);
+            $atividades = $request->input('atividades', []);
+
+            foreach ($atividades as $i => $atividade) {
+                if (!empty($atividade['data'])) {
+                    if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $atividade['data'])) {
+                        $atividades[$i]['data'] = Carbon::createFromFormat(
+                            'd/m/Y',
+                            $atividade['data']
+                        )->format('Y-m-d');
+                    }
+                }
+            }
+
+            $request->merge([
+                'data_inicio' => Carbon::createFromFormat('d/m/Y', $request->input('data_inicio'))->format('Y-m-d'),
+                'data_fim'    => Carbon::createFromFormat('d/m/Y', $request->input('data_fim'))->format('Y-m-d'),
+                'atividades'  => $atividades,
+            ]);
 
             $validated = $request->validate([
                 'nome' => 'required|string|max:255',
@@ -102,21 +138,73 @@ class EventoController extends Controller
                 'data_fim' => 'required|date|after_or_equal:data_inicio',
                 'hora_inicio' => 'required',
                 'hora_fim' => 'required|date_format:H:i|after:hora_inicio',
+                'tipo' => 'required|in:presencial,online,hibrido',
                 'atividades.*.data' => 'required|date|after_or_equal:' . $dataInicio . '|before_or_equal:' . $dataFim,
-                'atividades.*.hora_fim' => 'required|date_format:H:i|after:atividades.*.hora_inicio',
                 'atividades.*.hora_inicio' => 'required',
+                'atividades.*.hora_fim' => 'required|date_format:H:i|after:atividades.*.hora_inicio',
                 'atividades.*.nome' => 'required|string|max:255',
+
+                'curso.nome' => 'required|string|min:5|max:100',
+                'curso.descricao' => 'required|string|min:10|max:255',
+                'curso.carga_horaria' => 'required|numeric|min:1',
             ], [
+                // EVENTO
+                'nome.required' => 'O nome do evento é obrigatório.',
+                'nome.min' => 'O nome do evento deve conter mais de 5 caracteres.',
+                'nome.max' => 'O nome do evento não pode conter mais de 100 caracteres.',
+
+                'tipo.required' => 'O tipo do evento é obrigatório.',
+                'tipo.in' => 'O tipo do evento deve ser presencial, online ou híbrido.',
+
+                'descricao.required' => 'A descrição do evento é obrigatória.',
+                'descricao.min' => 'A descrição deve conter no minimo 10 caracteres.',
+                'descricao.max' => 'A descrição não pode conter mais de 255 caracteres.',
+
+                'local_do_evento.required' => 'O local do evento é obrigatório.',
+                'local_do_evento.max' => 'O local do evento não pode conter mais de 100 caracteres.',
+
+                'data_inicio.required' => 'A data de início é obrigatória.',
+                'data_inicio.after_or_equal' => 'A data de início não pode ser anterior a hoje.',
+
+                'data_fim.required' => 'A data fim é obrigatória.',
                 'data_fim.after_or_equal' => 'A data fim não pode ser anterior a data de início.',
+
+                'hora_inicio.required' => 'A hora de início é obrigatória.',
+
+                'hora_fim.required' => 'A hora fim é obrigatória.',
                 'hora_fim.after' => 'A hora fim não pode ser anterior ou igual a hora de início.',
+
+                'tipo.required' => 'O tipo do evento é obrigatório.',
+                'tipo.in' => 'O tipo do evento deve ser presencial, online ou híbrido.',
+
+                // ATIVIDADES
+                'atividades.required' => 'É obrigatório cadastrar ao menos uma atividade.',
+
                 'atividades.*.data.required' => 'A data da atividade é obrigatória.',
-                'atividades.*.hora_fim.required' => 'A hora fim da atividade é obrigatória.',
+                'atividades.*.data.after_or_equal' => 'A data início não pode ser antes da data inicial do evento.',
+                'atividades.*.data.before_or_equal' => 'A data de início não pode ser depois da data final do evento.',
+
                 'atividades.*.hora_inicio.required' => 'A hora início da atividade é obrigatória.',
-                'atividades.*.data.after_or_equal' => 'O horário de início não pode ser antes da data inicial do evento.',
-                'atividades.*.data.before_or_equal' => 'O horário de início não pode ser depois da data final do evento.',
+
+                'atividades.*.hora_fim.required' => 'A hora fim da atividade é obrigatória.',
                 'atividades.*.hora_fim.after' => 'A hora fim da ativade não pode ser anterior ou igual a hora de início.',
+
                 'atividades.*.nome.required' => 'O nome da atividade é obrigatório.',
-                'atividades.*.nome.max' => 'O nome da atividade não pode conter mais de 255 caracteres.'
+                'atividades.*.nome.min' => 'O nome da atividade deve conter mais de 5 caracteres.',
+                'atividades.*.nome.max' => 'O nome da atividade não pode conter mais de 100 caracteres.',
+
+                // CURSO
+                'curso.nome.required' => 'O nome do curso é obrigatorio.',
+                'curso.nome.min' => 'O nome do curso deve conter mais de 5 caracteres.',
+                'curso.nome.max' => 'O nome do curso não pode conter mais de 100 caracteres.',
+
+                'curso.descricao.required' => 'A descrição do curso é obrigatória.',
+                'curso.descricao.min' => 'A descrição deve conter no minimo 10 caracteres.',
+                'curso.descricao.max' => 'A descrição não pode conter mais de 255 caracteres.',
+
+                'curso.carga_horaria.required' => 'A carga horária do curso é obrigatória.',
+                'curso.carga_horaria.min' => 'A carga horária deve ser maior que 0.',
+
             ]);
             $evento->update($validated);
 
@@ -136,19 +224,32 @@ class EventoController extends Controller
                     }
                 }
 
-                $evento->atividades()->whereNotIn('id', $atividadesIds)->delete();
+                $evento->atividades()
+                    ->whereNotIn('id', $atividadesIds)
+                    ->delete();
             } else {
                 $evento->atividades()->delete();
             }
 
+            $cursoData = $request->input('curso');
+
+            if ($cursoData) {
+                if ($evento->curso) {
+                    // Atualiza curso existente
+                    $evento->curso->update($cursoData);
+                } else {
+                    // Cria curso se não existir
+                    $evento->curso()->create($cursoData);
+                }
+            }
+
             return redirect()
                 ->route('eventoShow', ['id' => $evento->id])
-                ->with('success', 'Evento atualizado com sucesso.')
-            ;
+                ->with('success', 'Evento atualizado com sucesso.');
 
         } catch (ValidationException $exception) {
             return Inertia::render('events/editar-evento', [
-                'evento' => $evento,
+                'evento' => $evento->load('atividades', 'curso'),
                 'message' => $exception->getMessage(),
                 'errors' => $exception->errors()
             ]);
@@ -237,7 +338,7 @@ class EventoController extends Controller
             return redirect()
                 ->route('eventoShow', ['id' => $evento->id])
                 ->with('success', 'Link para cadastro no evento ativado com sucesso.')
-            ;
+                ;
 
         } catch (ValidationException $exception) {
             return redirect()->back()->withErrors($exception->errors());
@@ -423,12 +524,12 @@ class EventoController extends Controller
                         'nome' => $evento->nome,
                     ]
                 )
-            ;
+                ;
 
         } catch (ValidationException $exception) {
             return Inertia::render('events/validar-hash', [
-               'message' => $exception->getMessage(),
-               'errors' => $exception->errors(),
+                'message' => $exception->getMessage(),
+                'errors' => $exception->errors(),
             ]);
         }
     }

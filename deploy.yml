@@ -1,0 +1,58 @@
+name: Deploy (Laravel)
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+
+            DEPLOY_DIR="/var/www/presente"
+            BRANCH="master"
+
+            cd "$DEPLOY_DIR" || { echo "Diretório não existe: $DEPLOY_DIR"; exit 1; }
+
+            echo "== Git update =="
+            git fetch origin
+            git reset --hard "origin/$BRANCH"
+
+            echo "== Composer =="
+            composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
+
+            echo "== Frontend build (se existir) =="
+            if [ -f package.json ]; then
+              npm ci || npm install
+              npm run build
+            else
+              echo "Sem package.json, pulando npm."
+            fi
+
+            echo "== Permissões Laravel =="
+            chown -R www-data:www-data storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+
+            echo "== Migrations (checagem -> migrate) =="
+            php artisan migrate:status
+            php artisan migrate --force
+
+            echo "== Optimize =="
+            php artisan optimize
+            php artisan queue:restart || true
+
+            echo "== Reload PHP-FPM 8.3 =="
+            systemctl reload php8.3-fpm || systemctl restart php8.3-fpm
+
+            echo "== Restart Nginx =="
+            systemctl restart nginx

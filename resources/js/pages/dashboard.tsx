@@ -279,7 +279,7 @@ const Dashboard: React.FC<EventoProps> = ({ eventos }) => {
 
                 {eventos.length == 0 && (
                     <Alert variant='warning' className='self-center justify-self-center'>
-                        <AlertTitle variant='warning'>Ainda não tem nenhum evento cadastrado!</AlertTitle>
+                        <AlertTitle variant='warning'>Ainda não tem nenhum evento cadastrado! <Link className="rounded-md text-primary text-center hover:text-primary-foreground underline dark:text-white dark:hover:text-zinc-200" href={route('criarEvento')}>Criar primeiro evento</Link></AlertTitle>
                     </Alert>
                 )}
             </DefaultLayout>
